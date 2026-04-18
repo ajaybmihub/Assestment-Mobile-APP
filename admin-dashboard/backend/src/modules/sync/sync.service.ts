@@ -23,8 +23,10 @@ export class SyncService {
 
   async processVideoSync(payload: any) {
     this.logger.log(`Processing video metadata for session: ${payload.sessionId}`);
-    // Update interview record with video URL (mock)
-    return { success: true, url: `https://storage.cloud/videos/${payload.sessionId}.mp4` };
+    if (!payload.sessionId || !payload.videoUrl) {
+      throw new Error('Missing sessionId or videoUrl');
+    }
+    return this.interviewsService.updateVideoUrl(payload.sessionId, payload.videoUrl);
   }
 
   async processLogSync(payload: any) {

@@ -93,14 +93,26 @@ export default async function InterviewDetailPage({
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
 
           <div style={{ display: 'flex', gap: '1rem' }}>
-            <div style={{
-              width: '200px', height: '112px', flexShrink: 0,
-              background: '#0E0E12', border: '1px solid var(--border)', borderRadius: '12px',
-              display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '0.375rem', color: 'var(--text-4)',
-            }}>
-              <div style={{ width: '36px', height: '36px', borderRadius: '50%', background: 'rgba(255,255,255,0.04)', border: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.875rem' }}>▶</div>
-              <div style={{ fontSize: '0.65rem', textAlign: 'center', lineHeight: 1.4 }}>Recording<br />unavailable</div>
-            </div>
+            {iv.video_url ? (
+              <video 
+                src={iv.video_url} 
+                controls 
+                style={{
+                  width: '200px', height: '112px', flexShrink: 0,
+                  background: '#0E0E12', border: '1px solid var(--border)', borderRadius: '12px',
+                  objectFit: 'cover'
+                }}
+              />
+            ) : (
+              <div style={{
+                width: '200px', height: '112px', flexShrink: 0,
+                background: '#0E0E12', border: '1px solid var(--border)', borderRadius: '12px',
+                display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '0.375rem', color: 'var(--text-4)',
+              }}>
+                <div style={{ width: '36px', height: '36px', borderRadius: '50%', background: 'rgba(255,255,255,0.04)', border: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.875rem' }}>▶</div>
+                <div style={{ fontSize: '0.65rem', textAlign: 'center', lineHeight: 1.4 }}>Recording<br />unavailable</div>
+              </div>
+            )}
 
             <div style={{ flex: 1, display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.75rem' }}>
               <QuickTile label="Questions" value={pairs.length} />

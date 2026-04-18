@@ -6,6 +6,7 @@ import { AppService } from './app.service';
 import { SyncModule } from './modules/sync/sync.module';
 import { InterviewsModule } from './modules/interviews/interviews.module';
 import { UsersModule } from './modules/users/users.module';
+import { MediaModule } from './modules/media/media.module';
 
 @Module({
   imports: [
@@ -20,6 +21,7 @@ import { UsersModule } from './modules/users/users.module';
     SyncModule,
     InterviewsModule,
     UsersModule,
+    MediaModule,
   ],
   controllers: [AppController],
   providers: [AppService],

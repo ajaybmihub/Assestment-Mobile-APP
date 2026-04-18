@@ -44,4 +44,12 @@ export class InterviewsService {
   async countAll(): Promise<number> {
     return this.interviewModel.countDocuments().exec();
   }
+
+  async updateVideoUrl(sessionId: string, videoUrl: string): Promise<any> {
+    this.logger.log(`Updating video URL for session ${sessionId}: ${videoUrl}`);
+    return this.interviewModel.updateOne(
+      { _id: sessionId },
+      { $set: { video_url: videoUrl } }
+    ).exec();
+  }
 }
