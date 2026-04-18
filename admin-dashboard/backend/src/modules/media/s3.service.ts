@@ -9,16 +9,16 @@ export class S3Service {
 
   constructor(private configService: ConfigService) {
     this.s3Client = new S3Client({
-      region: this.configService.get('AWS_REGION'),
+      region: this.configService.get<string>('AWS_REGION'),
       credentials: {
-        accessKeyId: this.configService.get('AWS_ACCESS_KEY_ID'),
-        secretAccessKey: this.configService.get('AWS_SECRET_ACCESS_KEY'),
+        accessKeyId: this.configService.get<string>('AWS_ACCESS_KEY_ID') || '',
+        secretAccessKey: this.configService.get<string>('AWS_SECRET_ACCESS_KEY') || '',
       },
     });
   }
 
   async getUploadUrl(fileName: string, contentType: string): Promise<string> {
-    const bucket = this.configService.get('AWS_S3_BUCKET');
+    const bucket = this.configService.get<string>('AWS_S3_BUCKET');
     const key = `interviews/${Date.now()}-${fileName}`;
 
     const command = new PutObjectCommand({
