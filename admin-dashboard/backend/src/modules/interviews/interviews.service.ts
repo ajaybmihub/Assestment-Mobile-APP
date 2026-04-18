@@ -46,10 +46,17 @@ export class InterviewsService {
   }
 
   async updateVideoUrl(sessionId: string, videoUrl: string): Promise<any> {
-    this.logger.log(`Updating video URL for session ${sessionId}: ${videoUrl}`);
-    return this.interviewModel.updateOne(
+    this.logger.log(`[SYNC] Updating video URL for session ${sessionId}`);
+    const result = await this.interviewModel.updateOne(
       { _id: sessionId },
-      { $set: { video_url: videoUrl } }
+      { 
+        $set: { video_url: videoUrl },
+        $setOnInsert: { created_at: new Date() } // Fallback for early video sync
+      },
+      { upsert: true }
     ).exec();
+    
+    this.logger.log(`[SYNC] Update result for ${sessionId}: matched=${result.matchedCount}, modified=${result.modifiedCount}, upserted=${result.upsertedCount}`);
+    return result;
   }
 }

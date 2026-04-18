@@ -40,6 +40,8 @@ export class Interview {
     head_rotation: number;
   };
 
+  @Prop() start_time: Date;
+  @Prop() end_time: Date;
   @Prop() created_at: Date;
 }
 

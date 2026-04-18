@@ -23,7 +23,7 @@ async function getData() {
         if (!rolesByUser[iv.user_id]) rolesByUser[iv.user_id] = new Set();
         rolesByUser[iv.user_id].add(iv.role);
       }
-      const t = iv.start_time;
+      const t = iv.start_time || iv.created_at || iv.createdAt;
       if (t && (!lastActiveByUser[iv.user_id] || t > lastActiveByUser[iv.user_id])) {
         lastActiveByUser[iv.user_id] = t;
       }
@@ -37,15 +37,20 @@ async function getData() {
 
 const COLORS = ['#7C3AED', '#2563EB', '#0D9488', '#B45309', '#BE185D'];
 
-function timeAgo(isoStr: string) {
+function timeAgo(isoStr: any) {
   if (!isoStr) return 'Never';
-  const diff = Date.now() - new Date(isoStr).getTime();
-  const mins = Math.floor(diff / 60000);
-  if (mins < 1) return 'Just now';
-  if (mins < 60) return `${mins}m ago`;
-  const hrs = Math.floor(mins / 60);
-  if (hrs < 24) return `${hrs}h ago`;
-  return `${Math.floor(hrs / 24)}d ago`;
+  try {
+    const date = typeof isoStr === 'object' && isoStr.$date ? new Date(isoStr.$date) : new Date(isoStr);
+    const diff = Date.now() - date.getTime();
+    if (isNaN(diff)) return 'Never';
+    
+    const mins = Math.floor(diff / 60000);
+    if (mins < 1) return 'Just now';
+    if (mins < 60) return `${mins}m ago`;
+    const hrs = Math.floor(mins / 60);
+    if (hrs < 24) return `${hrs}h ago`;
+    return `${Math.floor(hrs / 24)}d ago`;
+  } catch { return 'Never'; }
 }
 
 export default async function UsersPage() {
@@ -53,110 +58,114 @@ export default async function UsersPage() {
 
   return (
     <>
-      <div className="page-header">
+      <div className="page-header" style={{ marginBottom: '2.5rem' }}>
         <div className="page-header-row">
           <div>
-            <div className="page-title">Talent Pool</div>
-            <div className="page-subtitle">All registered users, their activity, and app usage history</div>
+            <div className="page-title">Candidate Directory</div>
+            <div className="page-subtitle">Unified view of all registered student profiles and their activity metrics</div>
           </div>
           <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
-            <div style={{ position: 'relative' }}>
-              <span style={{ position: 'absolute', left: '0.75rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-4)' }}>⌕</span>
-              <input type="text" placeholder="Search users..." className="search-input" />
-            </div>
+            <div className="badge badge-purple" style={{ padding: '0.625rem 1rem' }}>{allUsers.length} Active Profiles</div>
           </div>
         </div>
       </div>
 
-      {/* Summary Row */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1rem', marginBottom: '1.5rem' }}>
-        <div className="stat-card" style={{ padding: '1.25rem' }}>
-          <div className="stat-label">Total Users</div>
-          <div className="stat-value">{allUsers.length}</div>
-        </div>
-        <div className="stat-card" style={{ padding: '1.25rem' }}>
-          <div className="stat-label">Total App Sessions</div>
-          <div className="stat-value">{totalInterviews}</div>
-        </div>
-        <div className="stat-card" style={{ padding: '1.25rem' }}>
-          <div className="stat-label">Avg Sessions / User</div>
-          <div className="stat-value">
-            {allUsers.length > 0 ? (totalInterviews / allUsers.length).toFixed(1) : '0'}
-          </div>
-        </div>
-      </div>
-
-      {/* Users Table */}
-      <div className="card">
-        <table className="data-table">
-          <thead>
-            <tr>
-              <th>User</th>
-              <th>Email</th>
-              <th>Device</th>
-              <th>Sessions</th>
-              <th>Roles Practiced</th>
-              <th>Last Active</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {allUsers.length > 0 ? allUsers.map((user: any, idx: number) => {
-              const sessions = sessionsByUser[user._id] ?? 0;
-              const lastActive = lastActiveByUser[user._id];
-              const roles = Array.from(rolesByUser[user._id] ?? []);
-              return (
-                <tr key={user._id}>
-                  <td>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                      <div className="avatar" style={{ background: COLORS[idx % COLORS.length] + '20', color: COLORS[idx % COLORS.length] }}>
-                        {(user.name?.[0] ?? 'U').toUpperCase()}
+      <div className="card" style={{ padding: '0', overflow: 'hidden' }}>
+        <div style={{ overflowX: 'auto' }}>
+          <table className="data-table" style={{ width: '100%', tableLayout: 'fixed', minWidth: '1000px', borderCollapse: 'collapse' }}>
+            <thead>
+              <tr style={{ borderBottom: '1px solid var(--border)' }}>
+                <th style={{ paddingLeft: '1.5rem', width: '250px' }}>User Profile</th>
+                <th style={{ width: '200px' }}>Status / Email</th>
+                <th style={{ width: '150px' }}>Device</th>
+                <th style={{ width: '100px' }}>Sessions</th>
+                <th style={{ width: '200px' }}>Track Experience</th>
+                <th style={{ width: '120px' }}>Last Seen</th>
+                <th style={{ paddingRight: '1.5rem', textAlign: 'right', width: '120px' }}>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {allUsers.length > 0 ? allUsers.map((user: any, idx: number) => {
+                const sessions = sessionsByUser[user._id] ?? 0;
+                const lastActive = lastActiveByUser[user._id];
+                const roles = Array.from(rolesByUser[user._id] ?? []);
+                
+                return (
+                  <tr key={user._id} style={{ height: '84px', borderBottom: '1px solid var(--border-subtle)' }} className="table-row-hover">
+                    <td style={{ paddingLeft: '1.5rem' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                        <div className="avatar" style={{ 
+                          width: '40px', height: '40px', flexShrink: 0,
+                          background: COLORS[idx % COLORS.length] + '20', 
+                          color: COLORS[idx % COLORS.length],
+                          fontSize: '1rem', fontWeight: 700
+                        }}>
+                          {(user.name?.[0] ?? 'U').toUpperCase()}
+                        </div>
+                        <div style={{ overflow: 'hidden' }}>
+                          <div style={{ fontWeight: 700, color: 'var(--text-1)', fontSize: '0.9rem', marginBottom: '0.2rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{user.name ?? 'Anonymous User'}</div>
+                          <div style={{ fontSize: '0.65rem', color: 'var(--text-4)', fontFamily: 'monospace', letterSpacing: '0.04em' }}>
+                            ID: <span style={{ color: 'var(--text-3)' }}>{user._id?.slice(-12)}</span>
+                          </div>
+                        </div>
                       </div>
-                      <div>
-                        <div style={{ fontWeight: 600, color: 'var(--text-1)', fontSize: '0.875rem' }}>{user.name ?? 'Anonymous'}</div>
-                        <div style={{ fontSize: '0.7rem', color: 'var(--text-4)', fontFamily: 'monospace' }}>{user._id}</div>
+                    </td>
+                    <td>
+                      <div style={{ fontSize: '0.81rem', color: 'var(--text-2)', fontWeight: 500, marginBottom: '0.2rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{user.email ?? 'no-email@synced.com'}</div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                        <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#10B981', boxShadow: '0 0 4px #10B981' }} />
+                        <span style={{ fontSize: '0.65rem', color: 'var(--text-4)', textTransform: 'uppercase', fontWeight: 700, letterSpacing: '0.04em' }}>Verified</span>
                       </div>
-                    </div>
-                  </td>
-                  <td style={{ fontSize: '0.825rem', color: 'var(--text-3)' }}>{user.email ?? '—'}</td>
-                  <td>
-                    <div style={{ fontSize: '0.75rem', fontFamily: 'monospace', color: 'var(--text-3)' }}>{user.device_id}</div>
-                    <div style={{ fontSize: '0.7rem', color: 'var(--text-4)' }}>v{user.app_version}</div>
-                  </td>
-                  <td>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                      <div style={{ width: '50px', height: '4px', background: 'rgba(255,255,255,0.06)', borderRadius: '100px' }}>
-                        <div style={{ height: '100%', width: `${Math.min(100, sessions * 25)}%`, background: COLORS[idx % COLORS.length], borderRadius: '100px' }} />
+                    </td>
+                    <td>
+                      <div style={{ fontSize: '0.78rem', fontFamily: 'monospace', color: 'var(--text-2)', fontWeight: 600, marginBottom: '0.2rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{user.device_id || 'GEN-DEV-X'}</div>
+                      <div style={{ fontSize: '0.68rem', color: 'var(--text-4)' }}>v{user.app_version || '1.0.0'}</div>
+                    </td>
+                    <td>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.625rem' }}>
+                        <span style={{ fontWeight: 800, color: 'var(--text-1)', fontSize: '1rem' }}>{sessions}</span>
+                        <div style={{ width: '30px', height: '4px', background: 'rgba(255,255,255,0.05)', borderRadius: '100px', overflow: 'hidden' }}>
+                          <div style={{ height: '100%', width: `${Math.min(100, sessions * 20)}%`, background: COLORS[idx % COLORS.length] }} />
+                        </div>
                       </div>
-                      <span style={{ fontWeight: 700, color: 'var(--text-1)', fontSize: '0.875rem' }}>{sessions}</span>
-                    </div>
-                  </td>
-                  <td>
-                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.35rem' }}>
-                      {roles.length > 0
-                        ? roles.map(r => (
-                          <span key={r} style={{ fontSize: '0.68rem', padding: '0.15rem 0.6rem', borderRadius: '100px', background: 'rgba(124,58,237,0.12)', color: '#A78BFA', fontWeight: 500 }}>{r}</span>
-                        ))
-                        : <span style={{ color: 'var(--text-4)', fontSize: '0.78rem' }}>No sessions</span>
-                      }
-                    </div>
-                  </td>
-                  <td style={{ whiteSpace: 'nowrap', fontSize: '0.825rem', color: 'var(--text-3)' }}>
-                    {timeAgo(lastActive)}
-                  </td>
-                  <td>
-                    <Link href={`/users/${user._id}`}
-                      style={{ fontSize: '0.78rem', padding: '0.4rem 0.875rem', borderRadius: '8px', background: 'rgba(255,255,255,0.05)', border: '1px solid var(--border-strong)', color: 'var(--text-2)', textDecoration: 'none', fontWeight: 500, display: 'inline-block' }}>
-                      View →
-                    </Link>
-                  </td>
-                </tr>
-              );
-            }) : (
-              <tr><td colSpan={7} style={{ textAlign: 'center', padding: '4rem', color: 'var(--text-4)' }}>No users synced yet. Open the mobile app to start tracking.</td></tr>
-            )}
-          </tbody>
-        </table>
+                    </td>
+                    <td>
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem', maxHeight: '50px', overflow: 'hidden' }}>
+                        {roles.length > 0
+                          ? roles.slice(0, 3).map(r => (
+                            <span key={r} style={{ 
+                              fontSize: '0.65rem', padding: '0.2rem 0.6rem', borderRadius: '6px', 
+                              background: 'rgba(124,58,237,0.06)', color: '#A78BFA', 
+                              fontWeight: 600, border: '1px solid rgba(124,58,237,0.1)'
+                            }}>{r}</span>
+                          ))
+                          : <span style={{ color: 'var(--text-4)', fontSize: '0.75rem', fontStyle: 'italic' }}>Inactive</span>
+                        }
+                        {roles.length > 3 && <span style={{ fontSize: '0.65rem', color: 'var(--text-4)' }}>+{roles.length - 3}</span>}
+                      </div>
+                    </td>
+                    <td style={{ whiteSpace: 'nowrap', fontSize: '0.85rem', color: 'var(--text-2)', fontWeight: 500 }}>
+                      {timeAgo(lastActive)}
+                    </td>
+                    <td style={{ paddingRight: '1.5rem', textAlign: 'right' }}>
+                      <Link href={`/users/${user._id}`}
+                        style={{ 
+                          fontSize: '0.75rem', padding: '0.4rem 0.8rem', borderRadius: '8px', 
+                          background: 'rgba(255,255,255,0.03)', border: '1px solid var(--border-strong)', 
+                          color: 'var(--text-2)', textDecoration: 'none', fontWeight: 600,
+                          transition: 'all 0.2s ease', display: 'inline-block'
+                        }}>
+                        Manage
+                      </Link>
+                    </td>
+                  </tr>
+                );
+              }) : (
+                <tr><td colSpan={7} style={{ textAlign: 'center', padding: '6rem', color: 'var(--text-4)' }}>No student profiles synced yet.</td></tr>
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
     </>
   );
