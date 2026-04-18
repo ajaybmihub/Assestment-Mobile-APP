@@ -4,6 +4,12 @@ import { UsersService } from './users.service';
 @Controller('users')
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
+  
+  @Get('count')
+  async getCount() {
+    const total = await this.usersService.countAll();
+    return total;
+  }
 
   @Get()
   async findAll(

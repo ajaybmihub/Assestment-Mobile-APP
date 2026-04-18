@@ -27,7 +27,7 @@ export class SyncController {
 
   @Post('user')
   async syncUser(@Body() payload: any) {
-    this.logger.log(`Received user sync for profile: ${payload._id}`);
+    this.logger.log(`Incoming user sync request for profile: ${payload._id} (Device: ${payload.device_name})`);
     return this.syncService.processUserSync(payload);
   }
 }
