@@ -2,6 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { Interview } from './interview.schema';
+import { UsersService } from '../users/users.service';
 
 @Injectable()
 export class InterviewsService {
