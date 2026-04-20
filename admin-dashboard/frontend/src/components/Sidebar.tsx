@@ -8,8 +8,7 @@ const NAV = [
   { label: 'Overview',        icon: '◈', mobileIcon: '◈', href: '/'           },
   { label: 'Assessments',     icon: '▶', mobileIcon: '▶', href: '/interviews' },
   { label: 'Users',           icon: '◉', mobileIcon: '◉', href: '/users'      },
-  { label: 'Analytics',       icon: '◎', mobileIcon: '◎', href: '/analytics'  },
-  { label: 'Devices',         icon: '⊡', mobileIcon: '⊡', href: '/monitor'   },
+  { label: 'Support',         icon: '✉', mobileIcon: '✉', href: '/tickets'    },
 ];
 
 export default function Sidebar() {

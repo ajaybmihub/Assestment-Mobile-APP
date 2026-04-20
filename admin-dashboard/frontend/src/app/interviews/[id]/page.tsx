@@ -149,65 +149,35 @@ export default async function InterviewDetailPage({
             </div>
           )}
 
-          {/* Right: Quick tiles */}
+          {/* Redesigned Metrics Section */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
-              <QuickTile label="Overall" value={scores.overall || 'N/A'} accent />
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.75rem' }}>
               <QuickTile label="Technical" value={scores.technical_accuracy ? `${scores.technical_accuracy}%` : 'N/A'} />
               <QuickTile label="Clarity" value={scores.structure_clarity ? `${scores.structure_clarity}%` : 'N/A'} />
               <QuickTile label="Relevance" value={scores.answer_relevance ? `${scores.answer_relevance}%` : 'N/A'} />
-              <QuickTile label="Questions" value={pairs.length} />
-              <QuickTile label="Skipped" value={pairs.filter(p => p.skipped).length} warning={pairs.filter(p => p.skipped).length > 0} />
+              <QuickTile label="Engagement" value={scores.focus_score ? `${scores.focus_score}%` : 'N/A'} />
             </div>
 
-            {/* Proctoring flags */}
-            <div style={{ padding: '1.125rem', background: 'var(--accent-subtle)', border: '1px solid var(--accent-border)', borderRadius: '16px' }}>
-              <div style={{ fontSize: '0.62rem', fontWeight: 700, color: 'var(--accent-light)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '0.875rem' }}>Integrity Flags</div>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.75rem' }}>
+            {/* Integrity & Session Report */}
+            <div className="card" style={{ padding: '1.25rem', background: 'rgba(34,211,238,0.03)', border: '1px solid var(--accent-border)', borderRadius: '16px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
+                <span style={{ fontSize: '0.65rem', fontWeight: 800, color: 'var(--accent-light)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Integrity Report</span>
+                <span style={{ fontSize: '0.65rem', color: 'var(--text-4)', fontWeight: 600 }}>{pairs.length} Qs · {pairs.filter(p => p.skipped).length} Skips</span>
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1rem' }}>
                 <ProctorMetric label="No Face" value={flags.no_face ?? 0} />
                 <ProctorMetric label="Multi Face" value={flags.multiple_faces ?? flags.multi_face ?? 0} />
-                <ProctorMetric label="Rotation" value={flags.head_rotation ?? 0} />
+                <ProctorMetric label="Off-Track" value={flags.head_rotation ?? 0} />
               </div>
             </div>
 
-            {/* Depth + Focus (if available) */}
-            {(scores.depth_completeness || scores.focus_score) && (
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
-                {scores.depth_completeness && <QuickTile label="Depth" value={`${scores.depth_completeness}%`} />}
-                {scores.focus_score && <QuickTile label="Focus" value={`${scores.focus_score}%`} />}
-              </div>
+            {scores.depth_completeness && (
+              <QuickTile label="Depth of Answer" value={`${scores.depth_completeness}%`} subtitle="Analysis of response comprehensiveness" />
             )}
           </div>
         </div>
 
         {/* Skill bars — all scores visual */}
-        {Object.keys(scores).length > 1 && (
-          <div className="card">
-            <div className="card-header">
-              <div className="card-title">Score Breakdown</div>
-            </div>
-            <div style={{ padding: '1.25rem 1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-              {[
-                { key: 'technical_accuracy', label: 'Technical Accuracy' },
-                { key: 'structure_clarity', label: 'Structure & Clarity' },
-                { key: 'answer_relevance', label: 'Answer Relevance' },
-                { key: 'depth_completeness', label: 'Depth & Completeness' },
-                { key: 'focus_score', label: 'Focus Score' },
-              ].filter(s => scores[s.key]).map(({ key, label }) => {
-                const val = parseInt(scores[key]) || 0;
-                return (
-                  <div key={key} className="skill-bar">
-                    <div className="skill-bar-label">{label}</div>
-                    <div className="skill-bar-track">
-                      <div className="skill-bar-fill" style={{ width: `${val}%`, background: val >= 70 ? '#22C55E' : val >= 40 ? '#F59E0B' : '#EF4444' }} />
-                    </div>
-                    <div className="skill-bar-val"style={{ color: val >= 70 ? '#22C55E' : val >= 40 ? '#F59E0B' : '#EF4444' }}>{val}%</div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        )}
 
         {/* Transcript */}
         <details className="card transcript-collapse" style={{ borderRadius: '20px' }}>

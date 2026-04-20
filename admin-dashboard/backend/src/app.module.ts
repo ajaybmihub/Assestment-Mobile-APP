@@ -7,6 +7,8 @@ import { SyncModule } from './modules/sync/sync.module';
 import { InterviewsModule } from './modules/interviews/interviews.module';
 import { UsersModule } from './modules/users/users.module';
 import { MediaModule } from './modules/media/media.module';
+import { TicketsModule } from './modules/tickets/tickets.module';
+import { MonitorModule } from './modules/monitor/monitor.module';
 
 @Module({
   imports: [
@@ -22,6 +24,8 @@ import { MediaModule } from './modules/media/media.module';
     InterviewsModule,
     UsersModule,
     MediaModule,
+    TicketsModule,
+    MonitorModule,
   ],
   controllers: [AppController],
   providers: [AppService],
