@@ -9,16 +9,16 @@ async function getData() {
     ]);
     const users = await uRes.json();
     const interviews = await iRes.json();
-    
+
     const userNameMap: Record<string, string> = {};
     (users.data ?? []).forEach((u: any) => {
       userNameMap[u._id] = u.name || 'Anonymous';
     });
 
-    return { 
-      interviews: interviews.interviews ?? [], 
+    return {
+      interviews: interviews.interviews ?? [],
       total: interviews.total ?? 0,
-      userNameMap 
+      userNameMap,
     };
   } catch {
     return { interviews: [], total: 0, userNameMap: {} };
@@ -31,7 +31,6 @@ function timeAgo(isoStr: any) {
     const date = typeof isoStr === 'object' && isoStr.$date ? new Date(isoStr.$date) : new Date(isoStr);
     const diff = Date.now() - date.getTime();
     if (isNaN(diff)) return '—';
-    
     const mins = Math.floor(diff / 60000);
     if (mins < 1) return 'Just now';
     if (mins < 60) return `${mins}m ago`;
@@ -43,119 +42,175 @@ function timeAgo(isoStr: any) {
 
 const COLORS = ['#7C3AED', '#2563EB', '#0D9488', '#B45309', '#BE185D'];
 
+function scoreColor(n: number) {
+  if (n >= 70) return '#22C55E';
+  if (n >= 40) return '#F59E0B';
+  return '#EF4444';
+}
+
+function scoreBadgeClass(n: number) {
+  if (n >= 70) return 'badge-live';
+  if (n >= 40) return 'badge-amber';
+  return 'badge-rose';
+}
+
 export default async function InterviewsPage() {
   const { interviews, total, userNameMap } = await getData();
 
   return (
     <>
-      <div className="page-header" style={{ marginBottom: '2rem' }}>
+      <div className="page-header" style={{ marginBottom: '1.75rem' }}>
         <div className="page-header-row">
           <div>
-            <div className="page-title">Session Activity</div>
-            <div className="page-subtitle">All recorded app sessions and user interactions</div>
+            <div className="page-title">Assessments</div>
+            <div className="page-subtitle">All recorded interview sessions from the mobile app</div>
           </div>
-          <span className="badge badge-purple">{total} total sessions</span>
+          <span className="badge badge-purple">{total} sessions</span>
         </div>
       </div>
 
-      <div className="card" style={{ padding: '0', overflow: 'hidden' }}>
-        <div style={{ overflowX: 'auto' }}>
-          <table className="data-table" style={{ width: '100%', tableLayout: 'fixed', minWidth: '900px', borderCollapse: 'collapse' }}>
-            <thead>
-              <tr style={{ borderBottom: '1px solid var(--border)' }}>
-                <th style={{ paddingLeft: '1.5rem', width: '220px' }}>User</th>
-                <th style={{ width: '150px' }}>Role / Type</th>
-                <th style={{ textAlign: 'center', width: '120px' }}>Score</th>
-                <th style={{ width: '150px' }}>Device ID</th>
-                <th style={{ width: '120px' }}>Date</th>
-                <th style={{ width: '100px' }}>Relative</th>
-                <th style={{ textAlign: 'right', paddingRight: '1.5rem', width: '100px' }}>Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              {interviews.length > 0 ? interviews.map((iv: any, idx: number) => {
-                const userName = userNameMap[iv.user_id] || 'Anonymous';
-                const initial = (userName[0] || 'S').toUpperCase();
-                
-                const rawTimestamp = iv.start_time || iv.created_at || iv.createdAt;
-                const timestamp = typeof rawTimestamp === 'object' && rawTimestamp.$date ? rawTimestamp.$date : rawTimestamp;
-                
-                const dateDisplay = timestamp
-                  ? new Date(timestamp).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })
-                  : '—';
-                  
-                const overallScore = iv.scores?.overall || '0%';
-                const scoreNum = parseInt(overallScore) || 0;
+      {/* DESKTOP: Table view */}
+      <div className="card" style={{ display: 'none' }} id="desktop-table">
+        {/* Table is shown via CSS for desktop */}
+      </div>
 
-                return (
-                  <tr key={iv._id} style={{ height: '76px', borderBottom: '1px solid var(--border-subtle)' }} className="table-row-hover">
-                    <td style={{ paddingLeft: '1.5rem' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
-                        <div className="avatar" style={{ 
-                          width: '36px', height: '36px', flexShrink: 0,
-                          background: COLORS[idx % COLORS.length] + '20', 
-                          color: COLORS[idx % COLORS.length],
-                          fontSize: '0.9rem', fontWeight: 700
-                        }}>
-                          {initial}
-                        </div>
-                        <div style={{ overflow: 'hidden' }}>
-                          <div style={{ fontWeight: 600, color: 'var(--text-1)', fontSize: '0.875rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{userName}</div>
-                          <div style={{ fontSize: '0.675rem', color: 'var(--text-4)', fontFamily: 'monospace', letterSpacing: '0.01em' }}>
-                            ID: <span style={{ color: 'var(--text-3)' }}>{iv._id?.slice(-8)}</span>
+      {/* Both table (desktop) and cards (mobile) — CSS handles which is visible */}
+      <style dangerouslySetInnerHTML={{ __html: `
+        #table-view { display: block; }
+        #cards-view { display: none; }
+        @media (max-width: 768px) {
+          #table-view { display: none; }
+          #cards-view { display: flex; flex-direction: column; gap: 0.875rem; }
+        }
+      `}} />
+
+      {/* DESKTOP TABLE */}
+      <div id="table-view">
+        <div className="card" style={{ padding: '0', overflow: 'hidden' }}>
+          <div style={{ overflowX: 'auto' }}>
+            <table className="data-table" style={{ minWidth: '720px' }}>
+              <thead>
+                <tr>
+                  <th>Candidate</th>
+                  <th>Role</th>
+                  <th style={{ textAlign: 'center' }}>Score</th>
+                  <th>Device ID</th>
+                  <th>Date</th>
+                  <th style={{ textAlign: 'right', paddingRight: '1.5rem' }}>Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                {interviews.length > 0 ? interviews.map((iv: any, idx: number) => {
+                  const userName = userNameMap[iv.user_id] || 'Anonymous';
+                  const initial = (userName[0] || 'S').toUpperCase();
+                  const rawTs = iv.start_time || iv.created_at || iv.createdAt;
+                  const ts = typeof rawTs === 'object' && rawTs.$date ? rawTs.$date : rawTs;
+                  const dateDisplay = ts ? new Date(ts).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : '—';
+                  const overallScore = iv.scores?.overall || '0%';
+                  const scoreNum = parseInt(overallScore) || 0;
+
+                  return (
+                    <tr key={iv._id} style={{ height: '72px', borderBottom: '1px solid var(--border)' }}>
+                      <td style={{ paddingLeft: '1.5rem' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                          <div className="avatar" style={{ background: COLORS[idx % COLORS.length] + '20', color: COLORS[idx % COLORS.length], fontSize: '0.875rem', fontWeight: 700 }}>
+                            {initial}
+                          </div>
+                          <div>
+                            <div style={{ fontWeight: 600, color: 'var(--text-1)', fontSize: '0.875rem' }}>{userName}</div>
+                            <div style={{ fontSize: '0.67rem', color: 'var(--text-4)', fontFamily: 'monospace' }}>{iv._id?.slice(-8)}</div>
                           </div>
                         </div>
+                      </td>
+                      <td>
+                        <span style={{ fontSize: '0.72rem', padding: '0.3rem 0.65rem', borderRadius: '6px', background: 'var(--accent-subtle)', color: 'var(--accent-light)', fontWeight: 600, border: '1px solid var(--accent-border)' }}>
+                          {iv.role || 'Practice'}
+                        </span>
+                      </td>
+                      <td style={{ textAlign: 'center' }}>
+                        <span style={{ fontSize: '0.9rem', fontWeight: 800, color: scoreColor(scoreNum) }}>{overallScore}</span>
+                      </td>
+                      <td style={{ fontSize: '0.72rem', color: 'var(--text-3)', fontFamily: 'monospace', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '120px' }}>
+                        {iv.device_id ? iv.device_id.slice(0, 14) + '...' : '—'}
+                      </td>
+                      <td>
+                        <div style={{ fontSize: '0.82rem', color: 'var(--text-2)', whiteSpace: 'nowrap' }}>{dateDisplay}</div>
+                        <div style={{ fontSize: '0.7rem', color: 'var(--text-4)' }}>{timeAgo(ts)}</div>
+                      </td>
+                      <td style={{ paddingRight: '1.5rem', textAlign: 'right' }}>
+                        <Link href={`/interviews/${iv._id}`} style={{ fontSize: '0.75rem', padding: '0.4rem 0.8rem', borderRadius: '6px', background: 'var(--accent-subtle)', border: '1px solid var(--accent-border)', color: 'var(--accent-light)', textDecoration: 'none', fontWeight: 600, display: 'inline-block' }}>
+                          Detail
+                        </Link>
+                      </td>
+                    </tr>
+                  );
+                }) : (
+                  <tr>
+                    <td colSpan={6}>
+                      <div className="empty-state">
+                        <div className="empty-icon">📋</div>
+                        <div className="empty-title">No sessions recorded yet</div>
+                        <div className="empty-sub">Complete an interview on the mobile app and tap Sync Now to see it here.</div>
                       </div>
-                    </td>
-                    <td>
-                      <span style={{ 
-                        fontSize: '0.7rem', padding: '0.3rem 0.65rem', borderRadius: '6px', 
-                        background: 'var(--accent-subtle)', color: 'var(--accent-light)', 
-                        fontWeight: 600, border: '1px solid var(--accent-border)' 
-                      }}>
-                        {iv.role || 'Practice'}
-                      </span>
-                    </td>
-                    <td>
-                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.35rem' }}>
-                        <span style={{ fontSize: '0.875rem', fontWeight: 700, color: scoreNum > 70 ? '#10B981' : scoreNum > 40 ? '#F59E0B' : '#EF4444' }}>{overallScore}</span>
-                        <div style={{ width: '40px', height: '3px', background: 'rgba(255,255,255,0.05)', borderRadius: '100px', overflow: 'hidden' }}>
-                          <div style={{ 
-                            height: '100%', width: overallScore, 
-                            background: scoreNum > 70 ? '#10B981' : scoreNum > 40 ? '#F59E0B' : '#EF4444'
-                          }} />
-                        </div>
-                      </div>
-                    </td>
-                    <td style={{ fontSize: '0.75rem', color: 'var(--text-3)', fontFamily: 'monospace', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', paddingRight: '1rem' }}>
-                      {iv.device_id ?? '—'}
-                    </td>
-                    <td style={{ fontSize: '0.81rem', color: 'var(--text-2)', whiteSpace: 'nowrap' }}>{dateDisplay}</td>
-                    <td style={{ fontSize: '0.81rem', color: 'var(--text-4)', whiteSpace: 'nowrap' }}>{timeAgo(timestamp)}</td>
-                    <td style={{ paddingRight: '1.5rem', textAlign: 'right' }}>
-                      <Link href={`/interviews/${iv._id}`}
-                        style={{ 
-                          fontSize: '0.75rem', padding: '0.4rem 0.8rem', borderRadius: '6px', 
-                          background: 'var(--accent-subtle)', border: '1px solid var(--accent-border)', 
-                          color: 'var(--accent-light)', textDecoration: 'none', fontWeight: 600,
-                          transition: 'all 0.2s', display: 'inline-block'
-                        }}>
-                        Detail
-                      </Link>
                     </td>
                   </tr>
-                );
-              }) : (
-                <tr>
-                  <td colSpan={7} style={{ textAlign: 'center', padding: '5rem', color: 'var(--text-4)' }}>
-                    <div style={{ fontSize: '1.25rem', marginBottom: '0.5rem' }}>Empty Activity Log</div>
-                    <div style={{ fontSize: '0.875rem' }}>No sessions recorded yet.</div>
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
+      </div>
+
+      {/* MOBILE CARD VIEW */}
+      <div id="cards-view">
+        {interviews.length > 0 ? interviews.map((iv: any, idx: number) => {
+          const userName = userNameMap[iv.user_id] || 'Anonymous';
+          const initial = (userName[0] || 'S').toUpperCase();
+          const rawTs = iv.start_time || iv.created_at || iv.createdAt;
+          const ts = typeof rawTs === 'object' && rawTs.$date ? rawTs.$date : rawTs;
+          const dateDisplay = ts ? new Date(ts).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : '—';
+          const overallScore = iv.scores?.overall || '—';
+          const scoreNum = parseInt(overallScore) || 0;
+          const hasScore = !!iv.scores?.overall;
+
+          return (
+            <Link key={iv._id} href={`/interviews/${iv._id}`} style={{ textDecoration: 'none' }}>
+              <div className="report-card">
+                <div className="report-card-header">
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flex: 1, overflow: 'hidden' }}>
+                    <div style={{
+                      width: '40px', height: '40px', borderRadius: '12px', flexShrink: 0,
+                      background: COLORS[idx % COLORS.length] + '20', color: COLORS[idx % COLORS.length],
+                      display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: '1rem'
+                    }}>{initial}</div>
+                    <div style={{ overflow: 'hidden' }}>
+                      <div style={{ fontWeight: 600, fontSize: '0.875rem', color: 'var(--text-1)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{userName}</div>
+                      <div style={{ fontSize: '0.7rem', color: 'var(--text-4)' }}>{dateDisplay} · {timeAgo(ts)}</div>
+                    </div>
+                  </div>
+                  {hasScore && (
+                    <div style={{ flexShrink: 0, textAlign: 'center' }}>
+                      <div style={{ fontSize: '1.125rem', fontWeight: 800, color: scoreColor(scoreNum) }}>{overallScore}</div>
+                      <div style={{ fontSize: '0.6rem', color: 'var(--text-4)', fontWeight: 600 }}>SCORE</div>
+                    </div>
+                  )}
+                </div>
+                <div className="report-card-footer">
+                  <span style={{ fontSize: '0.72rem', padding: '0.25rem 0.6rem', borderRadius: '6px', background: 'var(--accent-subtle)', color: 'var(--accent-light)', fontWeight: 600, border: '1px solid var(--accent-border)' }}>
+                    {iv.role || 'Practice Session'}
+                  </span>
+                  <span style={{ fontSize: '0.75rem', color: 'var(--accent-light)', fontWeight: 600 }}>View Report →</span>
+                </div>
+              </div>
+            </Link>
+          );
+        }) : (
+          <div className="empty-state">
+            <div className="empty-icon">📋</div>
+            <div className="empty-title">No assessments yet</div>
+            <div className="empty-sub">Complete an interview on the mobile app and tap Sync Now to see it here.</div>
+          </div>
+        )}
       </div>
     </>
   );
