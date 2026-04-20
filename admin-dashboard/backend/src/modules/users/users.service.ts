@@ -13,12 +13,13 @@ export class UsersService {
 
   async upsertUser(data: any): Promise<any> {
     this.logger.log(`Upserting user profile: ${data._id}`);
+    const { _id, ...rest } = data;
     const update = { 
-      ...data,
+      ...rest,
       last_active_at: new Date(), // Always update last active
     };
     return this.userModel.updateOne(
-      { _id: data._id },
+      { _id: _id },
       { $set: update },
       { upsert: true },
     ).exec();

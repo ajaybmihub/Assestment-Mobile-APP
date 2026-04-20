@@ -13,6 +13,18 @@ export class SyncService {
 
   async processInterviewSync(payload: any) {
     this.logger.log(`Processing interview sync for session: ${payload._id}`);
+    
+    // Auto-map proctoring flags if they exist
+    if (payload.proctoring_flags) {
+      payload.proctoring = {
+        no_face: payload.proctoring_flags.no_face ?? 0,
+        multiple_faces: payload.proctoring_flags.multi_face ?? 0,
+        head_rotation: payload.proctoring_flags.head_rotation ?? 0,
+      };
+      // Clean up the raw field to prevent schema pollution
+      delete payload.proctoring_flags; 
+    }
+
     return this.interviewsService.upsertInterview(payload);
   }
 

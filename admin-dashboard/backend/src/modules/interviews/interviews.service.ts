@@ -21,14 +21,15 @@ export class InterviewsService {
       await this.usersService.upsertUser({ _id: data.user_id });
     }
 
+    const { _id, ...updateData } = data;
     return this.interviewModel.updateOne(
-      { _id: data._id },
-      { $set: data },
+      { _id: _id },
+      { $set: updateData },
       { upsert: true },
     ).exec();
   }
 
-  async findAll(page: number = 1, limit: number = 10): Promise<Interview[]> {
+  async findAll(page: number = 1, limit: number = 100): Promise<Interview[]> {
     return this.interviewModel
       .find()
       .sort({ created_at: -1 })
