@@ -66,7 +66,7 @@ export default async function UserDetailPage({ params }: { params: Promise<{ id:
         <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
           <div style={{ 
             width: '68px', height: '68px', borderRadius: '20px', 
-            background: 'rgba(124,58,237,0.12)', border: '1px solid rgba(124,58,237,0.2)', 
+            background: 'var(--accent-subtle)', border: '1px solid var(--accent-border)', 
             color: '#8B5CF6', display: 'flex', alignItems: 'center', 
             justifyContent: 'center', fontSize: '1.8rem', fontWeight: 800, flexShrink: 0 
           }}>
@@ -127,7 +127,7 @@ export default async function UserDetailPage({ params }: { params: Promise<{ id:
                   return (
                     <tr key={iv._id} style={{ height: '64px' }}>
                       <td style={{ paddingLeft: '1.5rem' }}>
-                        <span style={{ fontSize: '0.75rem', padding: '0.35rem 0.8rem', borderRadius: '100px', background: 'rgba(124,58,237,0.08)', color: '#A78BFA', fontWeight: 600 }}>
+                        <span style={{ fontSize: '0.75rem', padding: '0.35rem 0.8rem', borderRadius: '100px', background: 'var(--accent-subtle)', color: 'var(--accent-light)', fontWeight: 600 }}>
                           {iv.role ?? 'General'}
                         </span>
                       </td>
@@ -195,7 +195,7 @@ function KPICard({ label, value, sub }: { label: string; value: any; sub: string
     <div className="stat-card" style={{ padding: '1.5rem', borderRadius: '20px', display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
       <div style={{ fontSize: '0.65rem', fontWeight: 700, color: 'var(--text-4)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>{label}</div>
       <div style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--text-1)', letterSpacing: '-0.02em' }}>{value}</div>
-      <div style={{ fontSize: '0.7rem', color: 'rgba(124,58,237,0.6)', fontWeight: 600 }}>{sub}</div>
+      <div style={{ fontSize: '0.7rem', color: 'var(--accent-light)', opacity: 0.8, fontWeight: 600 }}>{sub}</div>
     </div>
   );
 }

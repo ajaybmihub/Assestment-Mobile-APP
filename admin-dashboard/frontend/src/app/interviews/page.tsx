@@ -110,8 +110,8 @@ export default async function InterviewsPage() {
                     <td>
                       <span style={{ 
                         fontSize: '0.7rem', padding: '0.3rem 0.65rem', borderRadius: '6px', 
-                        background: 'rgba(56, 189, 248, 0.08)', color: '#38BDF8', 
-                        fontWeight: 600, border: '1px solid rgba(56, 189, 248, 0.2)' 
+                        background: 'var(--accent-subtle)', color: 'var(--accent-light)', 
+                        fontWeight: 600, border: '1px solid var(--accent-border)' 
                       }}>
                         {iv.role || 'Practice'}
                       </span>

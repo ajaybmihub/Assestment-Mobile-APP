@@ -135,8 +135,8 @@ export default async function UsersPage() {
                           ? roles.slice(0, 3).map(r => (
                             <span key={r} style={{ 
                               fontSize: '0.65rem', padding: '0.2rem 0.6rem', borderRadius: '6px', 
-                              background: 'rgba(124,58,237,0.06)', color: '#A78BFA', 
-                              fontWeight: 600, border: '1px solid rgba(124,58,237,0.1)'
+                              background: 'var(--accent-subtle)', color: 'var(--accent-light)', 
+                              fontWeight: 600, border: '1px solid var(--accent-border)'
                             }}>{r}</span>
                           ))
                           : <span style={{ color: 'var(--text-4)', fontSize: '0.75rem', fontStyle: 'italic' }}>Inactive</span>

@@ -116,222 +116,148 @@ export default async function InterviewDetailPage({
             </div>
           </div>
         </div>
-      </div>
+      </div>      <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+        
+        {/* Pulse Animation Style */}
+        <style dangerouslySetInnerHTML={{ __html: `
+          @keyframes pulse-red {
+            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
+            70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(239, 68, 68, 0); }
+            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+          }
+          .pulse-dot { animation: pulse-red 2s infinite; }
+        `}} />
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 280px', gap: '2rem', alignItems: 'start' }}>
-
-        {/* Left Column */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
-          
-          {/* Pulse Animation Style */}
-          <style dangerouslySetInnerHTML={{ __html: `
-            @keyframes pulse-red {
-              0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
-              70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(239, 68, 68, 0); }
-              100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
-            }
-            .pulse-dot { animation: pulse-red 2s infinite; }
-          `}} />
-
-          {/* Video & Performance Section */}
-          <div style={{ 
-            display: 'grid', 
-            gridTemplateColumns: 'minmax(0, 2fr) minmax(0, 1.2fr)', 
-            gap: '1.5rem',
-            alignItems: 'stretch' 
-          }}>
-            {/* Main Video Player */}
-            <div style={{ position: 'relative' }}>
-              {iv.video_url ? (
+        {/* Top Section: Video & Primary Metrics */}
+        <div style={{ 
+          display: 'grid', 
+          gridTemplateColumns: 'minmax(0, 1.8fr) minmax(0, 1.2fr)', 
+          gap: '1.5rem',
+          alignItems: 'start' 
+        }}>
+          {/* Video Player */}
+          {iv.video_url ? (
+            <div style={{ 
+              position: 'relative', 
+              borderRadius: '20px', 
+              overflow: 'hidden', 
+              border: '1px solid rgba(255,255,255,0.08)', 
+              background: '#0a0a0c',
+              boxShadow: '0 12px 24px rgba(0,0,0,0.3)',
+              aspectRatio: '16/10',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}>
+              <video 
+                src={iv.video_url} 
+                controls 
+                style={{ width: '100%', height: '100%', display: 'block', objectFit: 'contain' }}
+              />
+              <div style={{ 
+                position: 'absolute', top: '1.25rem', left: '1.25rem', right: '1.25rem',
+                display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                pointerEvents: 'none', zIndex: 10
+              }}>
                 <div style={{ 
-                  position: 'relative', 
-                  borderRadius: '24px', 
-                  overflow: 'hidden', 
-                  border: '1px solid rgba(255,255,255,0.08)', 
-                  background: '#0a0a0c',
-                  boxShadow: '0 20px 40px rgba(0,0,0,0.4)',
-                  aspectRatio: '16/10',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center'
+                  display: 'flex', alignItems: 'center', gap: '0.625rem',
+                  background: 'rgba(0,0,0,0.6)', padding: '0.5rem 0.85rem', 
+                  borderRadius: '10px', backdropFilter: 'blur(12px)',
+                  border: '1px solid rgba(255,255,255,0.1)'
                 }}>
-                  <video 
-                    src={iv.video_url} 
-                    controls 
-                    style={{ width: '100%', height: '100%', display: 'block', objectFit: 'contain' }}
-                  />
-                  
-                  {/* Proctoring Overlays */}
-                  <div style={{ 
-                    position: 'absolute', top: '1.25rem', left: '1.25rem', right: '1.25rem',
-                    display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-                    pointerEvents: 'none', zIndex: 10
-                  }}>
-                    <div style={{ 
-                      display: 'flex', alignItems: 'center', gap: '0.625rem',
-                      background: 'rgba(0,0,0,0.6)', padding: '0.5rem 0.85rem', 
-                      borderRadius: '10px', backdropFilter: 'blur(12px)',
-                      border: '1px solid rgba(255,255,255,0.1)'
-                    }}>
-                      <div className="pulse-dot" style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#EF4444' }} />
-                      <span style={{ fontSize: '0.65rem', color: '#fff', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase' }}>Proctoring Live</span>
-                    </div>
-                    
-                    <div style={{ 
-                      background: 'rgba(0,0,0,0.6)', padding: '0.5rem 0.85rem', 
-                      borderRadius: '10px', backdropFilter: 'blur(12px)',
-                      border: '1px solid rgba(255,255,255,0.1)',
-                      fontSize: '0.65rem', color: 'rgba(255,255,255,0.5)', fontWeight: 700
-                    }}>
-                      HD SOURCE
-                    </div>
-                  </div>
+                  <div className="pulse-dot" style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#EF4444' }} />
+                  <span style={{ fontSize: '0.65rem', color: '#fff', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase' }}>Proctoring Live</span>
                 </div>
-              ) : (
-                <div style={{
-                  width: '100%', aspectRatio: '16/10',
-                  background: 'linear-gradient(135deg, #111118 0%, #09090b 100%)', 
-                  border: '1px solid rgba(255,255,255,0.05)', borderRadius: '24px',
-                  display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '1.25rem',
-                  boxShadow: 'inset 0 0 40px rgba(0,0,0,0.5)'
-                }}>
-                  <div style={{ 
-                    width: '64px', height: '64px', borderRadius: '20px', 
-                    background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', 
-                    display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.75rem',
-                    boxShadow: '0 8px 16px rgba(0,0,0,0.2)'
-                  }}>🎞️</div>
-                  <div style={{ textAlign: 'center' }}>
-                    <div style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--text-2)', marginBottom: '0.35rem' }}>No Video Feed</div>
-                    <div style={{ fontSize: '0.75rem', color: 'var(--text-4)', maxWidth: '200px', lineHeight: 1.5 }}>The candidate video report is currently unavailable or still syncing.</div>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* Performance Grid */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-              <div style={{ gridColumn: 'span 2' }}>
-                <QuickTile 
-                  label="Overall Candidate Score" 
-                  value={scores.overall || 'N/A'} 
-                  accent 
-                  subtitle="Weighted accuracy across all technical & behavioral skills"
-                />
+                <div style={{ 
+                  background: 'rgba(0,0,0,0.6)', padding: '0.5rem 0.85rem', 
+                  borderRadius: '10px', backdropFilter: 'blur(12px)',
+                  border: '1px solid rgba(255,255,255,0.1)',
+                  fontSize: '0.65rem', color: 'rgba(255,255,255,0.5)', fontWeight: 700
+                }}>HD SOURCE</div>
               </div>
-              <QuickTile 
-                label="Technical" 
-                value={scores.technical_accuracy ? `${scores.technical_accuracy}%` : 'N/A'} 
-              />
-              <QuickTile 
-                label="Clarity" 
-                value={scores.structure_clarity ? `${scores.structure_clarity}%` : 'N/A'} 
-              />
-              <QuickTile 
-                label="Questions" 
-                value={pairs.length} 
-              />
-              <QuickTile 
-                label="Trust Score" 
-                value={(flags.no_face ?? 0) + (flags.multiple_faces ?? 0) === 0 ? '100%' : 'Manual Review'} 
-                warning={(flags.no_face ?? 0) + (flags.multiple_faces ?? 0) > 0} 
-              />
+            </div>
+          ) : (
+            <div style={{
+              width: '100%', aspectRatio: '16/10',
+              background: 'linear-gradient(135deg, #111118 0%, #09090b 100%)', 
+              border: '1px solid rgba(255,255,255,0.05)', borderRadius: '24px',
+              display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '1.25rem',
+            }}>
+              <div style={{ width: '64px', height: '64px', borderRadius: '20px', background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.75rem' }}>🎞️</div>
+              <div style={{ textAlign: 'center' }}>
+                <div style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--text-2)', marginBottom: '0.35rem' }}>No Video Feed</div>
+                <div style={{ fontSize: '0.75rem', color: 'var(--text-4)', maxWidth: '200px' }}>Video report unavailable or syncing.</div>
+              </div>
+            </div>
+          )}
+
+          {/* Metrics Grid */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+              <QuickTile label="Overall Score" value={scores.overall || 'N/A'} accent />
+              <QuickTile label="Trust Score" value={(flags.no_face ?? 0) + (flags.multiple_faces ?? 0) === 0 ? '100%' : 'Manual Review'} warning={(flags.no_face ?? 0) + (flags.multiple_faces ?? 0) > 0} />
+              <QuickTile label="Technical" value={scores.technical_accuracy ? `${scores.technical_accuracy}%` : 'N/A'} />
+              <QuickTile label="Clarity" value={scores.structure_clarity ? `${scores.structure_clarity}%` : 'N/A'} />
+              <QuickTile label="Questions" value={pairs.length} />
+              <QuickTile label="Skipped" value={pairs.filter(p => p.skipped).length} />
+            </div>
+            
+            {/* Proctoring Indicators Row */}
+            <div className="card" style={{ padding: '1.25rem', borderRadius: '20px', background: 'var(--accent-subtle)', border: '1px solid var(--accent-border)' }}>
+              <div style={{ fontSize: '0.65rem', fontWeight: 700, color: 'var(--accent-light)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '1rem' }}>Security & Integrity Flags</div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1.25rem' }}>
+                <ProctorMetric label="No Face" value={flags.no_face ?? 0} />
+                <ProctorMetric label="Multi Face" value={flags.multiple_faces ?? 0} />
+                <ProctorMetric label="Rotation" value={flags.head_rotation ?? 0} />
+              </div>
             </div>
           </div>
+        </div>
 
-          {/* Transcript */}
-          <div className="card" style={{ borderRadius: '20px', overflow: 'hidden' }}>
-            <div className="card-header" style={{ padding: '1.5rem 2rem', borderBottom: '1px solid var(--border)' }}>
-              <div className="card-title" style={{ fontSize: '1.125rem' }}>Interview Transcript</div>
-              <div className="card-subtitle">Complete log of AI questions and candidate responses</div>
+        {/* Transcript Section */}
+        <details className="card transcript-collapse" style={{ borderRadius: '20px', border: '1px solid var(--border)', background: 'var(--bg-card)' }}>
+          <summary style={{ padding: '1.25rem 2rem', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'space-between', listStyle: 'none' }} className="transcript-summary">
+            <div>
+              <div style={{ fontSize: '1.125rem', fontWeight: 600, color: 'var(--text-1)' }}>Interview Transcript</div>
+              <div style={{ fontSize: '0.75rem', color: 'var(--text-3)' }}>Full conversation log analysis ({pairs.length} exchanges)</div>
             </div>
-
+            <div style={{ fontSize: '1.25rem', color: 'var(--text-3)' }} className="chevron">⌄</div>
+          </summary>
+          <div style={{ borderTop: '1px solid var(--border)' }}>
             {pairs.length > 0 ? (
-              <div style={{ padding: '1rem 0' }}>
+              <div style={{ padding: '0.5rem 0' }}>
                 {pairs.map((p, idx) => (
-                  <div key={idx} style={{
-                    padding: '2rem 2.5rem',
-                    borderBottom: idx < pairs.length - 1 ? '1px solid var(--border)' : 'none',
-                    display: 'flex', flexDirection: 'column', gap: '1.25rem',
-                    transition: 'background 0.2s',
-                  }} className="transcript-row">
-                    <div style={{ display: 'flex', gap: '1rem' }}>
-                      <div style={{ 
-                        width: '32px', height: '32px', borderRadius: '10px', background: 'var(--accent-subtle)', 
-                        border: '1px solid var(--accent-border)', display: 'flex', alignItems: 'center', 
-                        justifyContent: 'center', fontSize: '0.75rem', fontWeight: 800, color: 'var(--accent-light)', flexShrink: 0 
-                      }}>Q</div>
-                      <div style={{ fontSize: '1rem', color: 'var(--text-1)', lineHeight: 1.6, fontWeight: 600 }}>{p.q}</div>
+                  <div key={idx} style={{ padding: '1.25rem 1.75rem', borderBottom: idx < pairs.length - 1 ? '1px solid var(--border)' : 'none', display: 'flex', flexDirection: 'column', gap: '0.875rem' }} className="transcript-row">
+                    <div style={{ display: 'flex', gap: '0.85rem', alignItems: 'flex-start' }}>
+                      <div style={{ width: '28px', height: '28px', borderRadius: '8px', background: 'var(--accent-subtle)', border: '1px solid var(--accent-border)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.65rem', fontWeight: 800, color: 'var(--accent-light)', flexShrink: 0, marginTop: '2px' }}>Q</div>
+                      <div style={{ fontSize: '0.9rem', color: 'var(--text-1)', lineHeight: 1.5, fontWeight: 600, marginTop: '5px' }}>{p.q}</div>
                     </div>
-
                     {p.a && (
-                      <div style={{ display: 'flex', gap: '1rem', paddingLeft: '0.5rem' }}>
-                        <div style={{ 
-                          width: '32px', height: '32px', borderRadius: '10px', background: 'rgba(255,255,255,0.03)', 
-                          border: '1px solid var(--border)', display: 'flex', alignItems: 'center', 
-                          justifyContent: 'center', fontSize: '0.75rem', fontWeight: 800, color: 'var(--text-3)', flexShrink: 0 
-                        }}>A</div>
-                        <div style={{ 
-                          fontSize: '0.9375rem', color: p.skipped ? 'var(--amber)' : 'var(--text-2)', 
-                          lineHeight: 1.7, fontStyle: p.skipped ? 'italic' : 'normal',
-                          background: 'rgba(255,255,255,0.02)', padding: '1rem 1.25rem', borderRadius: '12px',
-                          border: '1px solid rgba(255,255,255,0.03)', width: '100%'
-                        }}>{p.skipped ? 'Candidate skipped this question.' : p.a}</div>
+                      <div style={{ display: 'flex', gap: '0.85rem', paddingLeft: '0.25rem' }}>
+                        <div style={{ width: '24px', height: '24px', borderRadius: '6px', background: 'rgba(255,255,255,0.04)', border: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.6rem', fontWeight: 800, color: 'var(--text-3)', flexShrink: 0, marginTop: '2px' }}>A</div>
+                        <div style={{ fontSize: '0.85rem', color: p.skipped ? 'var(--amber)' : 'var(--text-2)', lineHeight: 1.6, fontStyle: p.skipped ? 'italic' : 'normal', background: 'rgba(255,255,255,0.02)', padding: '0.75rem 1rem', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.03)', width: '100%' }}>{p.skipped ? 'Candidate skipped this question.' : p.a}</div>
                       </div>
                     )}
                   </div>
                 ))}
               </div>
             ) : (
-              <div style={{ padding: '4rem', textAlign: 'center', color: 'var(--text-4)' }}>
-                <div style={{ fontSize: '2.5rem', marginBottom: '1rem', opacity: 0.5 }}>📝</div>
-                <div>No transcript recorded for this session.</div>
-              </div>
+              <div style={{ padding: '4rem', textAlign: 'center', color: 'var(--text-4)' }}>No transcript recorded.</div>
             )}
           </div>
-        </div>
+        </details>
 
-        {/* Right Column (Sidebar) */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-          <div className="card" style={{ padding: '0', borderRadius: '16px' }}>
-            <div style={{ padding: '1.25rem 1.5rem', borderBottom: '1px solid var(--border)' }}>
-              <div style={{ fontSize: '0.875rem', fontWeight: 700, color: 'var(--text-1)' }}>Participant Data</div>
-            </div>
-            <div style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-              {[
-                { label: 'Name', value: iv.userName },
-                { label: 'User ID', value: iv.user_id, mono: true },
-                { label: 'Session ID', value: iv._id, mono: true },
-                { label: 'Device Model', value: iv.device_name || iv.device_id },
-                { label: 'App Version', value: iv.app_version ? `v${iv.app_version}` : '1.0.0' },
-              ].map(r => (
-                <div key={r.label}>
-                  <div style={{ fontSize: '0.65rem', fontWeight: 700, color: 'var(--text-4)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '0.4rem' }}>{r.label}</div>
-                  <div style={{ fontSize: '0.81rem', color: 'var(--text-2)', fontFamily: r.mono ? 'monospace' : 'inherit', wordBreak: 'break-all', lineHeight: 1.5 }}>{r.value || '—'}</div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div className="card" style={{ padding: '1.25rem', borderRadius: '16px', background: 'rgba(124,58,237,0.03)', border: '1px solid rgba(124,58,237,0.1)' }}>
-            <div style={{ fontSize: '0.65rem', fontWeight: 700, color: 'var(--accent-light)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '0.75rem' }}>Proctoring Summary</div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-              <ProctorItem label="No Face Detected" value={flags.no_face ?? 0} />
-              <ProctorItem label="Multi-Face Alerts" value={flags.multiple_faces ?? 0} />
-              <ProctorItem label="Gaze Deviation" value={flags.head_rotation ?? 0} />
-            </div>
-          </div>
-
-          <Link href="/interviews" 
-            style={{ 
-              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem',
-              fontSize: '0.875rem', color: 'var(--text-3)', textDecoration: 'none', 
-              padding: '0.75rem', borderRadius: '12px', border: '1px solid var(--border)',
-              transition: 'all 0.2s'
-            }} className="btn-hover-bright">
-            <span>←</span> Back to Activity
+        {/* Footer Navigation */}
+        <div style={{ display: 'flex', justifyContent: 'center', paddingTop: '1rem' }}>
+          <Link href="/interviews" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.875rem', color: 'var(--text-3)', textDecoration: 'none', padding: '0.75rem 2rem', borderRadius: '12px', border: '1px solid var(--border)' }} className="btn-hover-bright">
+            <span>←</span> Back to Activity Feed
           </Link>
         </div>
+
+        <style dangerouslySetInnerHTML={{ __html: `
+          .transcript-collapse[open] .chevron { transform: rotate(180deg); transition: transform 0.2s; }
+          .transcript-summary::-webkit-details-marker { display: none; }
+        `}} />
       </div>
     </div>
   );
@@ -339,33 +265,19 @@ export default async function InterviewDetailPage({
 
 function QuickTile({ label, value, accent, warning, subtitle }: { label: string; value: any; accent?: boolean, warning?: boolean, subtitle?: string }) {
   return (
-    <div style={{ 
-      padding: '1.25rem', background: 'var(--bg-card)', border: '1px solid var(--border)', 
-      borderRadius: '20px', display: 'flex', flexDirection: 'column', gap: '0.4rem',
-      boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
-      transition: 'transform 0.2s ease, border-color 0.2s ease',
-    }} className="metric-tile-hover">
+    <div style={{ padding: '1rem', background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: '16px', display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
       <div style={{ fontSize: '0.625rem', fontWeight: 700, color: 'var(--text-4)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>{label}</div>
-      <div style={{ 
-        fontSize: '1.5rem', fontWeight: 800, 
-        color: warning ? '#EF4444' : accent ? 'var(--accent-light)' : 'var(--text-1)', 
-        letterSpacing: '-0.02em', lineWeight: 1 
-      }}>{value}</div>
-      {subtitle && <div style={{ fontSize: '0.65rem', color: 'var(--text-4)', lineHeight: 1.4, marginTop: '0.2rem' }}>{subtitle}</div>}
+      <div style={{ fontSize: '1.25rem', fontWeight: 800, color: warning ? '#EF4444' : accent ? 'var(--accent-light)' : 'var(--text-1)', letterSpacing: '-0.02em' }}>{value}</div>
+      {subtitle && <div style={{ fontSize: '0.65rem', color: 'var(--text-4)', lineHeight: 1.4, marginTop: '0.1rem' }}>{subtitle}</div>}
     </div>
   );
 }
 
-function ProctorItem({ label, value }: { label: string; value: number }) {
+function ProctorMetric({ label, value }: { label: string; value: number }) {
   return (
-    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-      <span style={{ fontSize: '0.75rem', color: 'var(--text-3)' }}>{label}</span>
-      <span style={{ 
-        fontSize: '0.75rem', fontWeight: 700, 
-        color: value > 0 ? '#EF4444' : '#10B981',
-        background: value > 0 ? 'rgba(239, 68, 68, 0.1)' : 'rgba(16, 185, 129, 0.1)',
-        padding: '0.1rem 0.5rem', borderRadius: '4px'
-      }}>{value}</span>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+      <div style={{ fontSize: '0.6rem', fontWeight: 700, color: 'var(--text-4)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{label}</div>
+      <div style={{ fontSize: '1rem', fontWeight: 800, color: value > 0 ? '#EF4444' : '#10B981' }}>{value}</div>
     </div>
   );
 }
