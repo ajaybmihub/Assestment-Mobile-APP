@@ -4,10 +4,10 @@ import { Search, Video, VideoOff, ShieldCheck, MessageCircle, User, ArrowLeft, C
 
 async function getInterviewWithUser(id: string) {
   try {
-    const res = await fetch(`http://localhost:5000/interviews/${id}`, { cache: 'no-store' });
+    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/interviews/${id}`, { cache: 'no-store' });
     if (!res.ok) return null;
     const iv = await res.json();
-    const uRes = await fetch(`http://localhost:5000/users/${iv.user_id}`, { cache: 'no-store' });
+    const uRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/users/${iv.user_id}`, { cache: 'no-store' });
     const user = uRes.ok ? await uRes.json() : null;
     return { ...iv, userName: user?.name || 'Anonymous' };
   } catch { return null; }

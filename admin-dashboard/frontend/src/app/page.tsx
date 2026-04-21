@@ -5,8 +5,8 @@ import { Users, PlayCircle, Activity, Repeat, ClipboardList, User, ArrowRight } 
 async function getData() {
   try {
     const [uRes, iRes] = await Promise.all([
-      fetch('http://localhost:5000/users', { cache: 'no-store' }),
-      fetch('http://localhost:5000/interviews', { cache: 'no-store' }),
+      fetch(`${process.env.NEXT_PUBLIC_API_URL}/users`, { cache: 'no-store' }),
+      fetch(`${process.env.NEXT_PUBLIC_API_URL}/interviews`, { cache: 'no-store' }),
     ]);
     const users = await uRes.json();
     const interviews = await iRes.json();

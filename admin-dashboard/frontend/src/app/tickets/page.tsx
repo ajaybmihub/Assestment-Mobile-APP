@@ -16,8 +16,8 @@ export default function TicketsPage() {
     async function load() {
       try {
         const [tRes, uRes] = await Promise.all([
-          fetch('http://localhost:5000/tickets', { cache: 'no-store' }),
-          fetch('http://localhost:5000/users', { cache: 'no-store' }),
+          fetch(`${process.env.NEXT_PUBLIC_API_URL}/tickets`, { cache: 'no-store' }),
+          fetch(`${process.env.NEXT_PUBLIC_API_URL}/users`, { cache: 'no-store' }),
         ]);
         const ticketsData = await tRes.json();
         const usersData = await uRes.json();

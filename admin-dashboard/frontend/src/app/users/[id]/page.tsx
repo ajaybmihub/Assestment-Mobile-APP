@@ -4,8 +4,8 @@ import Link from 'next/link';
 async function getUser(id: string) {
   try {
     const [uRes, iRes] = await Promise.all([
-      fetch(`http://localhost:5000/users/${id}`, { cache: 'no-store' }),
-      fetch(`http://localhost:5000/interviews`, { cache: 'no-store' }),
+      fetch(`${process.env.NEXT_PUBLIC_API_URL}/users/${id}`, { cache: 'no-store' }),
+      fetch(`${process.env.NEXT_PUBLIC_API_URL}/interviews`, { cache: 'no-store' }),
     ]);
     const user = uRes.ok ? JSON.parse(await uRes.text()) : null;
     const ivData = iRes.ok ? await iRes.json() : { interviews: [] };
