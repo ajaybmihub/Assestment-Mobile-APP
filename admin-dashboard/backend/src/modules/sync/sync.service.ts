@@ -45,4 +45,10 @@ export class SyncService {
     this.logger.log(`Processing diagnostic logs from device: ${payload.deviceId}`);
     return { success: true, count: payload.logs?.length || 0 };
   }
+
+  async triggerQuestionGeneration(deviceId: string) {
+    this.logger.log(`Triggering AI question generation for device: ${deviceId}`);
+    const questions = await this.usersService.generateAndStoreQuestions(deviceId);
+    return { success: true, questions };
+  }
 }

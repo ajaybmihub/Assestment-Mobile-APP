@@ -9,6 +9,7 @@ import { UsersModule } from './modules/users/users.module';
 import { MediaModule } from './modules/media/media.module';
 import { TicketsModule } from './modules/tickets/tickets.module';
 import { MonitorModule } from './modules/monitor/monitor.module';
+import { AiModule } from './modules/ai/ai.module';
 
 @Module({
   imports: [
@@ -26,6 +27,7 @@ import { MonitorModule } from './modules/monitor/monitor.module';
     MediaModule,
     TicketsModule,
     MonitorModule,
+    AiModule,
   ],
   controllers: [AppController],
   providers: [AppService],

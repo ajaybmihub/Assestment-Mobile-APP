@@ -30,4 +30,10 @@ export class SyncController {
     this.logger.log(`Incoming user sync request for profile: ${payload._id} (Device: ${payload.device_name})`);
     return this.syncService.processUserSync(payload);
   }
+
+  @Post('generate-questions')
+  async generateQuestions(@Body() payload: { deviceId: string }) {
+    this.logger.log(`Received question generation request for device: ${payload.deviceId}`);
+    return this.syncService.triggerQuestionGeneration(payload.deviceId);
+  }
 }
