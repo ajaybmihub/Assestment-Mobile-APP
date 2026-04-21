@@ -130,11 +130,49 @@ export default function TicketsPage() {
                         }}>
                           {t.description || 'No description provided'}
                         </div>
-                        <div style={{ display: 'flex', gap: '0.5rem', marginTop: '8px' }}>
+                        <div style={{ display: 'flex', gap: '0.5rem', marginTop: '8px', alignItems: 'center' }}>
                           <span style={{ fontSize: '0.55rem', fontWeight: 800, color: 'var(--accent)', background: 'var(--accent-subtle)', padding: '2px 6px', borderRadius: '4px', textTransform: 'uppercase' }}>
                             {t.category || 'General'}
                           </span>
+                          {(t.image_url || (t.image_urls && t.image_urls.length > 0)) && (
+                            <div style={{ 
+                              display: 'flex', alignItems: 'center', gap: '4px', 
+                              fontSize: '0.6rem', fontWeight: 700, color: '#10B981',
+                              background: '#10B98115', padding: '2px 6px', borderRadius: '40px' 
+                            }}>
+                              <div style={{ width: '4px', height: '4px', borderRadius: '50%', background: '#10B981' }} />
+                              {t.image_urls?.length || 1} Attachment{ (t.image_urls?.length || 1) > 1 ? 's' : ''}
+                            </div>
+                          )}
                         </div>
+                        {(t.image_url || (t.image_urls && t.image_urls.length > 0)) && (
+                           <div style={{ marginTop: '10px', display: 'flex', gap: '4px', overflowX: 'hidden' }}>
+                             {(t.image_urls || [t.image_url]).filter(Boolean).slice(0, 3).map((url: string, i: number) => (
+                               <img 
+                                 key={i}
+                                 src={url} 
+                                 alt="Ticket preview" 
+                                 style={{ 
+                                   width: '60px', 
+                                   height: '40px', 
+                                   objectFit: 'cover', 
+                                   borderRadius: '6px',
+                                   border: '1px solid var(--border)',
+                                   cursor: 'zoom-in'
+                                 }} 
+                                 onClick={(e) => {
+                                   e.stopPropagation();
+                                   window.open(url, '_blank');
+                                 }}
+                               />
+                             ))}
+                             {(t.image_urls?.length > 3) && (
+                               <div style={{ width: '60px', height: '40px', background: 'var(--bg-elevated)', borderRadius: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.7rem', color: 'var(--text-4)', fontWeight: 700 }}>
+                                 +{t.image_urls.length - 3}
+                               </div>
+                             )}
+                           </div>
+                        )}
                       </div>
                     </td>
                     <td>
@@ -163,11 +201,13 @@ export default function TicketsPage() {
                 );
               }) : (
                 <tr>
+                  <td colSpan={5}>
                     <div className="empty-state">
                       <div className="empty-icon"><Mail size={40} /></div>
                       <div className="empty-title">No support tickets found</div>
                       <div className="empty-sub">Reported issues will appear here for review.</div>
                     </div>
+                  </td>
                 </tr>
               )}
             </tbody>

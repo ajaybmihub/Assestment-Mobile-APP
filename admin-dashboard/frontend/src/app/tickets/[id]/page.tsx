@@ -115,6 +115,24 @@ export default function TicketDetailPage() {
            <div style={{ fontSize: '1.15rem', color: 'var(--text-2)', lineHeight: 1.8, whiteSpace: 'pre-wrap' }}>
              {ticket.description}
            </div>
+
+           {(ticket.image_url || (ticket.image_urls && ticket.image_urls.length > 0)) && (
+             <div style={{ marginTop: '2.5rem' }}>
+               <div style={{ fontSize: '0.7rem', fontWeight: 800, color: 'var(--accent)', textTransform: 'uppercase', marginBottom: '1rem', letterSpacing: '0.1em' }}>Evidence & Attachments</div>
+               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '1rem' }}>
+                 {(ticket.image_urls || [ticket.image_url]).filter(Boolean).map((url: string, idx: number) => (
+                   <div key={idx} style={{ position: 'relative', borderRadius: '16px', overflow: 'hidden', border: '2px solid var(--border)', aspectRatio: '16/9' }}>
+                     <img 
+                       src={url} 
+                       alt={`Attachment ${idx + 1}`} 
+                       style={{ width: '100%', height: '100%', objectFit: 'cover', cursor: 'zoom-in' }} 
+                       onClick={() => window.open(url, '_blank')}
+                     />
+                   </div>
+                 ))}
+               </div>
+             </div>
+           )}
         </div>
 
         <div className="card" style={{ border: '1px solid var(--accent-border)', background: 'var(--accent-subtle)' }}>

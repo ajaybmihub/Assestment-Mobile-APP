@@ -32,6 +32,9 @@ export class Ticket extends Document {
 
   @Prop()
   resolution_notes: string;
+
+  @Prop({ type: [String], default: [] })
+  image_urls: string[];
 }
 
 export const TicketSchema = SchemaFactory.createForClass(Ticket);

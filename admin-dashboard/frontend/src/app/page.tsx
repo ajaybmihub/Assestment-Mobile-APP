@@ -1,18 +1,23 @@
-import React from 'react';
-import Link from 'next/link';
-import { Users, PlayCircle, Activity, Repeat, ClipboardList, User, ArrowRight } from 'lucide-react';
+'use client';
 
-async function getData() {
+import React, { useState, useEffect } from 'react';
+import Link from 'next/link';
+import { Users, PlayCircle, Activity, Mail, ClipboardList, User, ArrowRight, ShieldAlert, MessageCircle, Clock, RefreshCw, Ticket, AlertCircle } from 'lucide-react';
+
+async function fetchDashboardData() {
   try {
-    const [uRes, iRes] = await Promise.all([
+    const [uRes, iRes, tRes] = await Promise.all([
       fetch(`${process.env.NEXT_PUBLIC_API_URL}/users`, { cache: 'no-store' }),
       fetch(`${process.env.NEXT_PUBLIC_API_URL}/interviews`, { cache: 'no-store' }),
+      fetch(`${process.env.NEXT_PUBLIC_API_URL}/tickets`, { cache: 'no-store' }),
     ]);
     const users = await uRes.json();
     const interviews = await iRes.json();
+    const tickets = await tRes.json();
 
     const allUsers: any[] = users.data ?? [];
     const allInterviews: any[] = interviews.interviews ?? [];
+    const allTickets: any[] = tickets.tickets ?? [];
 
     const userNameMap: Record<string, string> = {};
     allUsers.forEach(u => { userNameMap[u._id] = u.name || 'Anonymous'; });
@@ -25,51 +30,65 @@ async function getData() {
     const activeCount = Object.keys(sessionsByUser).length;
     const uniqueDevices = new Set(allUsers.map((u: any) => u.device_id)).size;
 
-    // Multi-assessment tracking: users with > 1 sessions
     const multiSessionUsers = Object.values(sessionsByUser).filter(c => c > 1).length;
 
-    // Average score
     const scoredSessions = allInterviews.filter((iv: any) => iv.scores?.overall);
     const avgScore = scoredSessions.length > 0
       ? Math.round(scoredSessions.reduce((s: number, iv: any) => s + parseInt(iv.scores.overall) || 0, 0) / scoredSessions.length)
       : 0;
 
-    // Pass rate (score >= 60)
     const passCount = scoredSessions.filter((iv: any) => (parseInt(iv.scores?.overall) || 0) >= 60).length;
     const passRate = scoredSessions.length > 0 ? Math.round((passCount / scoredSessions.length) * 100) : 0;
 
-    // Role breakdown
     const roleCount: Record<string, number> = {};
     for (const iv of allInterviews) {
       const r = iv.role || 'Unknown';
       roleCount[r] = (roleCount[r] ?? 0) + 1;
     }
-    const topRoles = Object.entries(roleCount).sort((a, b) => b[1] - a[1]).slice(0, 4);
 
-    // Recent activity (last 5)
     const recentActivity = [...allInterviews]
-      .sort((a, b) => (b.start_time ?? '').localeCompare(a.start_time ?? ''))
+      .sort((a, b) => (b.start_time || '').localeCompare(a.start_time || ''))
       .slice(0, 5);
+
+    const recentTickets = [...allTickets]
+      .sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''))
+      .slice(0, 5);
+
+    const openTickets = allTickets.filter(t => t.status === 'open').length;
+
+    const userMetaMap: Record<string, { device: string, lastActive: string, isOnline: boolean }> = {};
+    allUsers.forEach(u => { 
+      const userSessions = allInterviews.filter(iv => iv.user_id === u._id);
+      const latest = userSessions.sort((a,b) => (b.start_time || '').localeCompare(a.start_time || ''))[0];
+      const lastActive = latest?.start_time || u.createdAt || '';
+      const diffMs = lastActive ? Date.now() - new Date(lastActive).getTime() : Infinity;
+      
+      userMetaMap[u._id] = {
+        device: u.device_name || u.device_id?.slice(0, 8) || 'Unknown',
+        lastActive: lastActive,
+        isOnline: diffMs < (1000 * 60 * 10),
+      };
+    });
 
     return {
       totalUsers: users.meta?.total ?? allUsers.length,
       totalSessions: interviews.total ?? allInterviews.length,
+      totalTickets: allTickets.length,
+      openTickets,
       activeUsers: activeCount,
       uniqueDevices,
       multiSessionUsers,
       avgScore,
       passRate,
-      topRoles,
       recentActivity,
+      recentTickets,
       userNameMap,
+      userMetaMap,
       sessionsByUser,
     };
-  } catch {
-    return {
-      totalUsers: 0, totalSessions: 0, activeUsers: 0, uniqueDevices: 0,
-      multiSessionUsers: 0, avgScore: 0, passRate: 0, topRoles: [],
-      recentActivity: [], userNameMap: {}, sessionsByUser: {},
-    };
+  } catch (error) {
+    console.error("Dashboard pull failed:", error);
+    return null;
   }
 }
 
@@ -92,32 +111,72 @@ function scoreColor(n: number) {
   return '#EF4444';
 }
 
-export default async function Dashboard() {
+export default function Dashboard() {
+  const [data, setData] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  async function loadData(silent = false) {
+    if (!silent) setLoading(true);
+    else setIsRefreshing(true);
+    
+    const freshData = await fetchDashboardData();
+    if (freshData) setData(freshData);
+    
+    setLoading(false);
+    setIsRefreshing(false);
+  }
+
+  useEffect(() => {
+    loadData();
+    const interval = setInterval(() => loadData(true), 10000); // Poll every 10s
+    return () => clearInterval(interval);
+  }, []);
+
+  if (loading && !data) {
+    return (
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '60vh', flexDirection: 'column', gap: '1rem' }}>
+        <RefreshCw className="animate-spin" size={32} color="var(--accent)" />
+        <div style={{ color: 'var(--text-4)', fontSize: '0.9rem' }}>Booting Dashboard Engine...</div>
+      </div>
+    );
+  }
+
   const {
-    totalUsers, totalSessions, activeUsers, uniqueDevices,
-    multiSessionUsers, avgScore, passRate, topRoles,
-    recentActivity, userNameMap, sessionsByUser,
-  } = await getData();
+    totalUsers, totalSessions, totalTickets, openTickets, activeUsers, uniqueDevices,
+    avgScore, recentActivity, recentTickets, userNameMap, userMetaMap, sessionsByUser,
+  } = data || {
+    totalUsers: 0, totalSessions: 0, totalTickets: 0, openTickets: 0, activeUsers: 0, uniqueDevices: 0,
+    avgScore: 0, recentActivity: [], recentTickets: [], userNameMap: {}, userMetaMap: {}, sessionsByUser: {},
+  };
 
   const engagementRate = totalUsers > 0 ? Math.round((activeUsers / totalUsers) * 100) : 0;
 
   return (
     <>
+      <style dangerouslySetInnerHTML={{ __html: `
+        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        .animate-spin { animation: spin 2s linear infinite; }
+      `}} />
+
       {/* PAGE HEADER */}
       <div className="page-header">
         <div className="page-header-row">
           <div>
             <div className="page-title">Dashboard Overview</div>
-            <div className="page-subtitle">Assessment activity, candidate performance & user engagement</div>
+            <div className="page-subtitle">Real-time assessment activity & candidate engagement</div>
           </div>
-          <span className="badge badge-live">
-            <span className="badge-dot" />
-            Live Sync Active
-          </span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+            {isRefreshing && <RefreshCw size={14} className="animate-spin" style={{ color: 'var(--text-4)' }} />}
+            <span className="badge badge-live">
+              <span className="badge-dot" />
+              Live Sync Active
+            </span>
+          </div>
         </div>
       </div>
 
-      {/* TOP STATS — 4-col desktop, 2-col mobile */}
+      {/* TOP STATS */}
       <div className="stats-grid" style={{ marginBottom: '1.5rem' }}>
         <div className="stat-card">
           <div className="stat-card-icon icon-purple"><Users size={20} /></div>
@@ -144,27 +203,30 @@ export default async function Dashboard() {
           </div>
         </div>
         <div className="stat-card">
-          <div className="stat-card-icon icon-amber"><Repeat size={20} /></div>
+          <div className="stat-card-icon icon-amber"><Mail size={20} /></div>
           <div>
-            <div className="stat-label">Repeat Candidates</div>
-            <div className="stat-value">{multiSessionUsers}</div>
-            <div className="stat-meta"><span style={{ color: 'var(--green)' }}>{engagementRate}%</span> engagement rate</div>
+            <div className="stat-label">Support Tickets</div>
+            <div className="stat-value">{totalTickets}</div>
+            <div className="stat-meta"><span style={{ color: openTickets > 0 ? '#EF4444' : 'var(--green)' }}>{openTickets} open</span> issues pending</div>
           </div>
         </div>
       </div>
 
-      {/* MAIN CONTENT: 2 columns desktop, stacked mobile */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-
-        {/* ROW 1 — Recent Assessments + Role Breakdown */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 280px', gap: '1.5rem' }} className="content-grid">
+        {/* ROW 1 — Recent Assessments + Recent Tickets */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr)', gap: '1.5rem' }} className="content-grid-two-col">
+          <style dangerouslySetInnerHTML={{ __html: `
+            @media (max-width: 1024px) {
+              .content-grid-two-col { grid-template-columns: 1fr !important; }
+            }
+          `}} />
 
           {/* Recent Assessments */}
           <div className="card">
             <div className="card-header">
               <div>
                 <div className="card-title">Recent Assessments</div>
-                <div className="card-subtitle">Latest candidate sessions synced from the app</div>
+                <div className="card-subtitle">Latest sessions synced from the app</div>
               </div>
               <Link href="/interviews" className="btn btn-ghost" style={{ textDecoration: 'none', whiteSpace: 'nowrap' }}>
                 View all <ArrowRight size={14} style={{ marginLeft: '4px' }} />
@@ -199,52 +261,95 @@ export default async function Dashboard() {
                     }}>
                       {(name[0] || 'S').toUpperCase()}
                     </div>
-                     <div style={{ flex: 1, overflow: 'hidden' }}>
+                    <div style={{ flex: 1, overflow: 'hidden' }}>
                       <div style={{ fontWeight: 700, fontSize: '0.9rem', color: 'var(--text-1)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', marginBottom: '0.15rem' }}>{name}</div>
                       <div style={{ fontSize: '0.7rem', color: 'var(--text-4)' }}>{iv.role || 'Practice Session'}</div>
                     </div>
-                    {/* Score — hidden on smallest mobile */}
                     <div style={{ textAlign: 'right', flexShrink: 0 }} className="col-hide-mobile">
                       <div style={{ fontSize: '0.875rem', fontWeight: 700, color: col }}>{scoreStr}</div>
                       <div style={{ fontSize: '0.65rem', color: 'var(--text-4)' }}>{timeAgo(iv.start_time)}</div>
                     </div>
-                    <div style={{ fontSize: '0.7rem', color: 'var(--accent)', fontWeight: 600, whiteSpace: 'nowrap', display: 'flex', alignItems: 'center' }}>
-                      Detail <ArrowRight size={12} style={{ marginLeft: '4px' }} />
-                    </div>
                   </Link>
                 );
               }) : (
-                <div className="empty-state">
-                  <div className="empty-icon"><ClipboardList size={40} /></div>
-                  <div className="empty-title">No assessments yet</div>
-                  <div className="empty-sub">When users complete interviews on the app, they will appear here.</div>
+                <div className="empty-state" style={{ padding: '2rem' }}>
+                  <div className="empty-icon"><ClipboardList size={32} /></div>
+                  <div className="empty-title" style={{ fontSize: '0.9rem' }}>No assessments yet</div>
                 </div>
               )}
             </div>
           </div>
 
-          {/* Role Breakdown — hidden on smallest mobile view, kept for tablet+ */}
-          <div className="card" style={{ overflow: 'visible' }}>
+          {/* Recent Support Tickets */}
+          <div className="card">
             <div className="card-header">
-              <div className="card-title">Top Roles</div>
-              <div className="card-subtitle">By volume</div>
+              <div>
+                <div className="card-title">Recent Tickets</div>
+                <div className="card-subtitle">User-reported issues and feedback</div>
+              </div>
+              <Link href="/tickets" className="btn btn-ghost" style={{ textDecoration: 'none', whiteSpace: 'nowrap' }}>
+                Manage <ArrowRight size={14} style={{ marginLeft: '4px' }} />
+              </Link>
             </div>
-            <div style={{ padding: '1.25rem 1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-              {topRoles.length > 0 ? topRoles.map(([role, count], i) => {
-                const pct = totalSessions > 0 ? Math.round((count / totalSessions) * 100) : 0;
+            <div>
+              {recentTickets.length > 0 ? recentTickets.map((t: any, i: number) => {
+                const name = userNameMap[t.user_id] || 'Registered User';
+                const isUrgent = t.priority === 'high' || t.priority === 'critical';
                 return (
-                  <div key={role}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.4rem' }}>
-                      <div style={{ fontSize: '0.78rem', fontWeight: 500, color: 'var(--text-2)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '160px' }}>{role}</div>
-                      <span style={{ fontSize: '0.72rem', fontWeight: 700, color: COLORS[i % COLORS.length] }}>{count} sessions</span>
+                  <Link
+                    key={t._id}
+                    href={`/tickets/${t._id}`}
+                    style={{
+                      display: 'flex', alignItems: 'center', gap: '1rem',
+                      padding: '0.875rem 1.5rem',
+                      borderBottom: i < recentTickets.length - 1 ? '1px solid var(--border)' : 'none',
+                      textDecoration: 'none',
+                      transition: 'background 0.15s',
+                    }}
+                    className="table-row-hover"
+                  >
+                    <div style={{
+                      width: '42px', height: '42px', borderRadius: '12px', flexShrink: 0,
+                      background: isUrgent ? '#EF444415' : 'var(--bg-elevated)', 
+                      border: '1px solid ' + (isUrgent ? '#EF444430' : 'var(--border)'),
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      color: isUrgent ? '#EF4444' : 'var(--accent)',
+                    }}>
+                      {isUrgent ? <ShieldAlert size={20} /> : <Ticket size={20} />}
                     </div>
-                    <div style={{ height: '6px', background: 'var(--border)', borderRadius: '100px', overflow: 'hidden' }}>
-                      <div style={{ height: '100%', width: `${pct}%`, background: COLORS[i % COLORS.length], borderRadius: '100px', transition: 'width 0.5s' }} />
+                    <div style={{ flex: 1, overflow: 'hidden' }}>
+                      <div style={{ fontWeight: 700, fontSize: '0.9rem', color: 'var(--text-1)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', marginBottom: '0.15rem' }}>{t.title}</div>
+                      <div style={{ fontSize: '0.7rem', color: 'var(--text-4)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        {name} · {t.category}
+                        <span style={{ 
+                          fontSize: '0.6rem', fontWeight: 900, 
+                          color: isUrgent ? '#EF4444' : (t.priority === 'medium' ? '#F59E0B' : 'var(--text-4)'),
+                          textTransform: 'uppercase',
+                          background: isUrgent ? '#EF444415' : 'transparent',
+                          padding: isUrgent ? '1px 5px' : '0',
+                          borderRadius: '4px'
+                        }}>
+                          [{t.priority}]
+                        </span>
+                      </div>
                     </div>
-                  </div>
+                    <div style={{ textAlign: 'right', flexShrink: 0 }} className="col-hide-mobile">
+                      <div style={{ 
+                        fontSize: '0.65rem', fontWeight: 900, 
+                        color: t.status === 'open' ? '#EF4444' : '#22C55E',
+                        textTransform: 'uppercase', marginBottom: '0.2rem'
+                      }}>{t.status}</div>
+                      <div style={{ fontSize: '0.65rem', color: 'var(--text-4)', display: 'flex', alignItems: 'center', gap: '4px', justifyContent: 'flex-end' }}>
+                        <Clock size={10} /> {timeAgo(t.createdAt)}
+                      </div>
+                    </div>
+                  </Link>
                 );
               }) : (
-                <div style={{ textAlign: 'center', color: 'var(--text-4)', fontSize: '0.82rem', padding: '1.5rem 0' }}>No data yet</div>
+                <div className="empty-state" style={{ padding: '2rem' }}>
+                  <div className="empty-icon"><Mail size={32} /></div>
+                  <div className="empty-title" style={{ fontSize: '0.9rem' }}>No pending tickets</div>
+                </div>
               )}
             </div>
           </div>
@@ -261,82 +366,95 @@ export default async function Dashboard() {
               View all <ArrowRight size={14} style={{ marginLeft: '4px' }} />
             </Link>
           </div>
+          
           <div style={{ overflowX: 'auto' }}>
-            <table className="data-table">
+            <table className="data-table" style={{ tableLayout: 'fixed', width: '100%' }}>
               <thead>
                 <tr>
-                  <th>Candidate</th>
-                  <th className="col-hide-mobile">Device</th>
-                  <th>Assessments</th>
-                  <th className="col-hide-mobile">Last Active</th>
-                  <th>Status</th>
+                  <th style={{ width: '250px' }}>Candidate</th>
+                  <th className="col-hide-mobile" style={{ width: '150px' }}>Device</th>
+                  <th style={{ width: '120px' }}>Assessments</th>
+                  <th className="col-hide-mobile" style={{ width: '150px' }}>Last Active</th>
+                  <th style={{ width: '120px' }}>Status</th>
                 </tr>
               </thead>
-              <tbody>
-                {/* Show top 5 most active users on dashboard */}
-                {Object.entries(sessionsByUser)
-                  .sort((a, b) => b[1] - a[1])
-                  .slice(0, 5)
-                  .map(([userId, sessions], idx) => {
-                    const name = userNameMap[userId] || 'Anonymous';
-                    const isEngaged = sessions > 0;
-                    const isRepeat = sessions > 1;
-                    return (
-                      <tr key={userId}>
-                        <td>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.875rem' }}>
-                            <div style={{ 
-                                width: '40px', height: '40px', borderRadius: '12px',
-                                background: COLORS[idx % COLORS.length] + '20',
-                                border: '1px solid ' + COLORS[idx % COLORS.length] + '40',
-                                color: COLORS[idx % COLORS.length],
-                                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                fontSize: '0.875rem', fontWeight: 800
-                            }}>
-                              {(name[0] || 'U').toUpperCase()}
-                            </div>
-                            <div>
-                              <div style={{ fontWeight: 700, color: 'var(--text-1)', fontSize: '0.875rem', marginBottom: '0.15rem' }}>{name}</div>
-                              {isRepeat && (
-                                <span style={{ fontSize: '0.6rem', background: 'var(--accent-subtle)', color: 'var(--accent)', padding: '0.1rem 0.4rem', borderRadius: '4px', fontWeight: 700 }}>REPEAT</span>
-                              )}
-                            </div>
-                          </div>
-                        </td>
-                        <td className="col-hide-mobile" style={{ fontSize: '0.8rem', color: 'var(--text-3)' }}>—</td>
-                        <td>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                            <div style={{ width: '52px', height: '6px', background: 'var(--border)', borderRadius: '100px', overflow: 'hidden' }}>
-                              <div style={{ height: '100%', width: `${Math.min(100, sessions * 20)}%`, background: 'linear-gradient(90deg, var(--accent), #EC4899)', borderRadius: '100px' }} />
-                            </div>
-                            <span style={{ fontWeight: 700, fontSize: '0.875rem' }}>{sessions}</span>
-                          </div>
-                        </td>
-                        <td className="col-hide-mobile" style={{ fontSize: '0.82rem', color: 'var(--text-3)' }}>—</td>
-                        <td>
-                          {isEngaged
-                            ? <span className="badge badge-live"><span className="badge-dot" />Active</span>
-                            : <span style={{ fontSize: '0.72rem', color: 'var(--text-4)', fontWeight: 600 }}>Inactive</span>
-                          }
-                        </td>
-                      </tr>
-                    );
-                  })}
-                {Object.keys(sessionsByUser).length === 0 && (
-                  <tr>
-                    <td colSpan={5}>
-                      <div className="empty-state" style={{ padding: '2.5rem' }}>
-                        <div className="empty-icon"><User size={40} /></div>
-                        <div className="empty-title">No candidates yet</div>
-                      </div>
-                    </td>
-                  </tr>
-                )}
-              </tbody>
             </table>
+            
+            <div style={{ 
+              maxHeight: '340px', 
+              overflowY: 'auto',
+              scrollbarWidth: 'thin',
+              scrollbarColor: 'var(--border) transparent'
+            }}>
+              <table className="data-table" style={{ tableLayout: 'fixed', width: '100%', borderTop: 'none' }}>
+                <tbody>
+                  {Object.entries(sessionsByUser)
+                    .sort((a, b) => (b[1] as number) - (a[1] as number))
+                    .map(([userId, sessions], idx) => {
+                      const name = userNameMap[userId] || 'Anonymous';
+                      const meta = userMetaMap[userId] || { device: 'Unknown', lastActive: '', isOnline: false };
+                      const isRepeat = (sessions as number) > 1;
+                      
+                      return (
+                        <tr key={userId}>
+                          <td style={{ width: '250px' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.875rem' }}>
+                              <div style={{ 
+                                  width: '40px', height: '40px', borderRadius: '12px',
+                                  background: COLORS[idx % COLORS.length] + '20',
+                                  border: '1px solid ' + COLORS[idx % COLORS.length] + '40',
+                                  color: COLORS[idx % COLORS.length],
+                                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                  fontSize: '0.875rem', fontWeight: 800
+                              }}>
+                                {(name[0] || 'U').toUpperCase()}
+                              </div>
+                              <div>
+                                <div style={{ fontWeight: 700, color: 'var(--text-1)', fontSize: '0.875rem', marginBottom: '0.15rem' }}>{name}</div>
+                                {isRepeat && (
+                                  <span style={{ fontSize: '0.6rem', background: 'var(--accent-subtle)', color: 'var(--accent)', padding: '0.1rem 0.4rem', borderRadius: '4px', fontWeight: 700 }}>REPEAT</span>
+                                )}
+                              </div>
+                            </div>
+                          </td>
+                          <td className="col-hide-mobile" style={{ width: '150px', fontSize: '0.8rem', color: 'var(--text-3)' }}>
+                            {meta.device}
+                          </td>
+                          <td style={{ width: '120px' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                              <div style={{ width: '52px', height: '6px', background: 'var(--border)', borderRadius: '100px', overflow: 'hidden' }}>
+                                <div style={{ height: '100%', width: `${Math.min(100, (sessions as number) * 20)}%`, background: 'linear-gradient(90deg, var(--accent), #EC4899)', borderRadius: '100px' }} />
+                              </div>
+                              <span style={{ fontWeight: 700, fontSize: '0.875rem' }}>{sessions as number}</span>
+                            </div>
+                          </td>
+                          <td className="col-hide-mobile" style={{ width: '150px', fontSize: '0.82rem', color: 'var(--text-3)' }}>
+                            {meta.lastActive ? timeAgo(meta.lastActive) : '—'}
+                          </td>
+                          <td style={{ width: '120px' }}>
+                            {meta.isOnline
+                              ? <span className="badge badge-live" style={{ padding: '4px 10px' }}><span className="badge-dot" />Live</span>
+                              : <span style={{ fontSize: '0.72rem', color: 'var(--text-4)', fontWeight: 600 }}>Inactive</span>
+                            }
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  {Object.keys(sessionsByUser).length === 0 && (
+                    <tr>
+                      <td colSpan={5}>
+                        <div className="empty-state" style={{ padding: '2.5rem' }}>
+                          <div className="empty-icon"><User size={40} /></div>
+                          <div className="empty-title">No candidates yet</div>
+                        </div>
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
-
       </div>
     </>
   );

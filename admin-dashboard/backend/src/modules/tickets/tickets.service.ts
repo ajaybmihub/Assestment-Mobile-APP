@@ -8,15 +8,23 @@ export class TicketsService {
   constructor(@InjectModel(Ticket.name) private ticketModel: Model<Ticket>) {}
 
   async create(data: any): Promise<Ticket> {
-    const ticket = new this.ticketModel({
-      ...data,
-      activity_log: [{
-        status: 'open',
-        timestamp: new Date(),
-        message: 'Ticket created'
-      }]
-    });
-    return ticket.save();
+    console.log("BACKEND: Creating ticket with data:", JSON.stringify(data, null, 2));
+    try {
+      const ticket = new this.ticketModel({
+        ...data,
+        activity_log: [{
+          status: 'open',
+          timestamp: new Date(),
+          message: 'Ticket created'
+        }]
+      });
+      const saved = await ticket.save();
+      console.log("BACKEND: Ticket saved successfully:", saved._id);
+      return saved;
+    } catch (error) {
+      console.error("BACKEND ERROR: Failed to save ticket:", error);
+      throw error;
+    }
   }
 
   async findAll(): Promise<{ tickets: Ticket[]; total: number }> {
