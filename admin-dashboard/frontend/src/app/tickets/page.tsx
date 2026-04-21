@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { Mail, Loader2, ArrowRight, User } from 'lucide-react';
 
 export default function TicketsPage() {
   const [data, setData] = useState<{ tickets: any[], total: number, userNameMap: Record<string, string> }>({
@@ -45,11 +46,8 @@ export default function TicketsPage() {
   if (loading) {
     return (
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '60vh', gap: '1.5rem' }}>
-        <div className="loading-spinner" style={{ width: '40px', height: '40px', border: '3px solid var(--accent-subtle)', borderTopColor: 'var(--accent-light)', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
-        <div style={{ color: 'var(--text-3)', fontSize: '0.9rem', fontWeight: 500, letterSpacing: '0.05em' }}>PREPARING Support Tickets...</div>
-        <style dangerouslySetInnerHTML={{ __html: `
-          @keyframes spin { to { transform: rotate(360deg); } }
-        `}} />
+        <Loader2 className="animate-spin" size={40} color="var(--accent)" />
+        <div style={{ color: 'var(--text-3)', fontSize: '0.9rem', fontWeight: 600, letterSpacing: '0.05em' }}>PREPARING Support Tickets...</div>
       </div>
     );
   }
@@ -66,12 +64,12 @@ export default function TicketsPage() {
         </div>
       </div>
 
-      <div className="card" style={{ border: '1px solid var(--border-subtle)', background: 'rgba(30,32,44,0.3)' }}>
+      <div className="card" style={{ border: '1px solid var(--border)', background: 'var(--bg-card)', boxShadow: 'var(--shadow-card)' }}>
         <div style={{ overflowX: 'auto' }}>
           <table className="data-table">
             <thead>
               <tr>
-                <th style={{ paddingLeft: '1.5rem' }}>User</th>
+                <th style={{ paddingLeft: '1.5rem', width: '250px' }}><div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><User size={14} /> Profile</div></th>
                 <th>Issue Details</th>
                 <th>Priority</th>
                 <th>Status</th>
@@ -94,23 +92,26 @@ export default function TicketsPage() {
                     <td style={{ paddingLeft: '1.5rem' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
                         <div style={{ 
-                          width: '40px', 
-                          height: '40px', 
+                          width: '42px', 
+                          height: '42px', 
                           borderRadius: '12px', 
-                          background: name ? 'var(--accent-gradient)' : 'linear-gradient(135deg, #475569 0%, #1e293b 100%)',
+                          background: name ? 'var(--accent-subtle)' : 'var(--bg-elevated)',
+                          border: '1px solid var(--accent-border)',
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
-                          fontSize: '0.8rem',
-                          fontWeight: 700,
-                          color: '#fff',
-                          boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
+                          fontSize: '0.85rem',
+                          fontWeight: 800,
+                          color: 'var(--accent)',
+                          flexShrink: 0
                         }}>
                           {initials}
                         </div>
-                        <div>
-                          <div style={{ fontWeight: 600, color: 'var(--text-1)', fontSize: '0.9rem' }}>{name || 'Registered User'}</div>
-                          <div style={{ fontSize: '0.65rem', color: 'var(--text-4)', letterSpacing: '0.02em', marginTop: '2px' }}>ID: {t.user_id.slice(-10)}</div>
+                        <div style={{ overflow: 'hidden' }}>
+                          <div style={{ fontWeight: 700, color: 'var(--text-1)', fontSize: '0.9rem', marginBottom: '0.2rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{name || 'Registered User'}</div>
+                          <div style={{ fontSize: '0.65rem', color: 'var(--text-4)', fontFamily: 'monospace', letterSpacing: '0.04em' }}>
+                            ID: <span style={{ color: 'var(--text-3)' }}>{t.user_id.slice(-10)}</span>
+                          </div>
                         </div>
                       </div>
                     </td>
@@ -130,7 +131,7 @@ export default function TicketsPage() {
                           {t.description || 'No description provided'}
                         </div>
                         <div style={{ display: 'flex', gap: '0.5rem', marginTop: '8px' }}>
-                          <span style={{ fontSize: '0.55rem', fontWeight: 800, color: 'var(--accent-light)', background: 'var(--accent-subtle)', padding: '2px 6px', borderRadius: '4px', textTransform: 'uppercase' }}>
+                          <span style={{ fontSize: '0.55rem', fontWeight: 800, color: 'var(--accent)', background: 'var(--accent-subtle)', padding: '2px 6px', borderRadius: '4px', textTransform: 'uppercase' }}>
                             {t.category || 'General'}
                           </span>
                         </div>
@@ -162,10 +163,11 @@ export default function TicketsPage() {
                 );
               }) : (
                 <tr>
-                  <td colSpan={5} style={{ textAlign: 'center', padding: '4rem' }}>
-                    <div style={{ opacity: 0.3, fontSize: '2rem', marginBottom: '0.5rem' }}>✉</div>
-                    <div style={{ color: 'var(--text-4)' }}>No support tickets found</div>
-                  </td>
+                    <div className="empty-state">
+                      <div className="empty-icon"><Mail size={40} /></div>
+                      <div className="empty-title">No support tickets found</div>
+                      <div className="empty-sub">Reported issues will appear here for review.</div>
+                    </div>
                 </tr>
               )}
             </tbody>

@@ -1,5 +1,6 @@
 import React from 'react';
 import Link from 'next/link';
+import { ClipboardList, ArrowRight, FileText, User } from 'lucide-react';
 
 async function getData() {
   try {
@@ -91,7 +92,7 @@ export default async function InterviewsPage() {
             <table className="data-table" style={{ minWidth: '720px' }}>
               <thead>
                 <tr>
-                  <th>Candidate</th>
+                  <th style={{ paddingLeft: '1.5rem', width: '250px' }}><div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><User size={14} /> Profile</div></th>
                   <th>Role</th>
                   <th style={{ textAlign: 'center' }}>Score</th>
                   <th>Device ID</th>
@@ -112,13 +113,28 @@ export default async function InterviewsPage() {
                   return (
                     <tr key={iv._id} style={{ height: '72px', borderBottom: '1px solid var(--border)' }}>
                       <td style={{ paddingLeft: '1.5rem' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                          <div className="avatar" style={{ background: COLORS[idx % COLORS.length] + '20', color: COLORS[idx % COLORS.length], fontSize: '0.875rem', fontWeight: 700 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                          <div style={{ 
+                            width: '42px', 
+                            height: '42px', 
+                            borderRadius: '12px', 
+                            background: COLORS[idx % COLORS.length] + '20',
+                            border: '1px solid ' + COLORS[idx % COLORS.length] + '40',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            fontSize: '0.85rem',
+                            fontWeight: 800,
+                            color: COLORS[idx % COLORS.length],
+                            flexShrink: 0
+                          }}>
                             {initial}
                           </div>
-                          <div>
-                            <div style={{ fontWeight: 600, color: 'var(--text-1)', fontSize: '0.875rem' }}>{userName}</div>
-                            <div style={{ fontSize: '0.67rem', color: 'var(--text-4)', fontFamily: 'monospace' }}>{iv._id?.slice(-8)}</div>
+                          <div style={{ overflow: 'hidden' }}>
+                            <div style={{ fontWeight: 700, color: 'var(--text-1)', fontSize: '0.9rem', marginBottom: '0.2rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{userName}</div>
+                            <div style={{ fontSize: '0.65rem', color: 'var(--text-4)', fontFamily: 'monospace', letterSpacing: '0.04em' }}>
+                              ID: <span style={{ color: 'var(--text-3)' }}>{iv._id?.slice(-8)}</span>
+                            </div>
                           </div>
                         </div>
                       </td>
@@ -138,8 +154,8 @@ export default async function InterviewsPage() {
                         <div style={{ fontSize: '0.7rem', color: 'var(--text-4)' }}>{timeAgo(ts)}</div>
                       </td>
                       <td style={{ paddingRight: '1.5rem', textAlign: 'right' }}>
-                        <Link href={`/interviews/${iv._id}`} style={{ fontSize: '0.75rem', padding: '0.4rem 0.8rem', borderRadius: '6px', background: 'var(--accent-subtle)', border: '1px solid var(--accent-border)', color: 'var(--accent-light)', textDecoration: 'none', fontWeight: 600, display: 'inline-block' }}>
-                          Detail
+                        <Link href={`/interviews/${iv._id}`} className="btn btn-primary" style={{ fontSize: '0.75rem', padding: '0.4rem 0.8rem', borderRadius: '8px', textDecoration: 'none', fontWeight: 600, display: 'inline-flex', alignItems: 'center' }}>
+                          Detail <ArrowRight size={14} style={{ marginLeft: '4px' }} />
                         </Link>
                       </td>
                     </tr>
@@ -148,7 +164,7 @@ export default async function InterviewsPage() {
                   <tr>
                     <td colSpan={6}>
                       <div className="empty-state">
-                        <div className="empty-icon">📋</div>
+                        <div className="empty-icon"><FileText size={40} /></div>
                         <div className="empty-title">No sessions recorded yet</div>
                         <div className="empty-sub">Complete an interview on the mobile app and tap Sync Now to see it here.</div>
                       </div>
@@ -177,14 +193,16 @@ export default async function InterviewsPage() {
             <Link key={iv._id} href={`/interviews/${iv._id}`} style={{ textDecoration: 'none' }}>
               <div className="report-card">
                 <div className="report-card-header">
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flex: 1, overflow: 'hidden' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.875rem', flex: 1, overflow: 'hidden' }}>
                     <div style={{
-                      width: '40px', height: '40px', borderRadius: '12px', flexShrink: 0,
-                      background: COLORS[idx % COLORS.length] + '20', color: COLORS[idx % COLORS.length],
-                      display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: '1rem'
+                      width: '44px', height: '44px', borderRadius: '12px', flexShrink: 0,
+                      background: COLORS[idx % COLORS.length] + '20',
+                      border: '1px solid ' + COLORS[idx % COLORS.length] + '40',
+                      color: COLORS[idx % COLORS.length],
+                      display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: '0.95rem'
                     }}>{initial}</div>
                     <div style={{ overflow: 'hidden' }}>
-                      <div style={{ fontWeight: 600, fontSize: '0.875rem', color: 'var(--text-1)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{userName}</div>
+                      <div style={{ fontWeight: 700, fontSize: '0.9rem', color: 'var(--text-1)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', marginBottom: '0.15rem' }}>{userName}</div>
                       <div style={{ fontSize: '0.7rem', color: 'var(--text-4)' }}>{dateDisplay} · {timeAgo(ts)}</div>
                     </div>
                   </div>
@@ -195,18 +213,20 @@ export default async function InterviewsPage() {
                     </div>
                   )}
                 </div>
-                <div className="report-card-footer">
-                  <span style={{ fontSize: '0.72rem', padding: '0.25rem 0.6rem', borderRadius: '6px', background: 'var(--accent-subtle)', color: 'var(--accent-light)', fontWeight: 600, border: '1px solid var(--accent-border)' }}>
-                    {iv.role || 'Practice Session'}
-                  </span>
-                  <span style={{ fontSize: '0.75rem', color: 'var(--accent-light)', fontWeight: 600 }}>View Report →</span>
-                </div>
+                  <div className="report-card-footer">
+                    <span style={{ fontSize: '0.72rem', padding: '0.25rem 0.6rem', borderRadius: '6px', background: 'var(--accent-subtle)', color: 'var(--accent)', fontWeight: 600, border: '1px solid var(--accent-border)' }}>
+                      {iv.role || 'Practice Session'}
+                    </span>
+                    <span style={{ fontSize: '0.75rem', color: 'var(--accent)', fontWeight: 600, display: 'flex', alignItems: 'center' }}>
+                      Report <ArrowRight size={14} style={{ marginLeft: '4px' }} />
+                    </span>
+                  </div>
               </div>
             </Link>
           );
         }) : (
           <div className="empty-state">
-            <div className="empty-icon">📋</div>
+            <div className="empty-icon"><ClipboardList size={40} /></div>
             <div className="empty-title">No assessments yet</div>
             <div className="empty-sub">Complete an interview on the mobile app and tap Sync Now to see it here.</div>
           </div>

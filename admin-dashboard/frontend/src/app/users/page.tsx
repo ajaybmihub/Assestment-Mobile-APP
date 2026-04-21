@@ -1,5 +1,6 @@
 import React from 'react';
 import Link from 'next/link';
+import { User, Mail, Smartphone, Layers, History, Settings, CheckCircle, ArrowRight } from 'lucide-react';
 
 async function getData() {
   try {
@@ -72,16 +73,15 @@ export default async function UsersPage() {
 
       <div className="card" style={{ padding: '0', overflow: 'hidden' }}>
         <div style={{ overflowX: 'auto' }}>
-          <table className="data-table" style={{ width: '100%', tableLayout: 'fixed', minWidth: '1000px', borderCollapse: 'collapse' }}>
+          <table className="data-table" style={{ width: '100%', tableLayout: 'fixed', minWidth: '940px', borderCollapse: 'collapse' }}>
             <thead>
               <tr style={{ borderBottom: '1px solid var(--border)' }}>
-                <th style={{ paddingLeft: '1.5rem', width: '250px' }}>User Profile</th>
-                <th style={{ width: '200px' }}>Status / Email</th>
-                <th style={{ width: '150px' }}>Device</th>
-                <th style={{ width: '100px' }}>Sessions</th>
-                <th style={{ width: '200px' }}>Track Experience</th>
-                <th style={{ width: '120px' }}>Last Seen</th>
-                <th style={{ paddingRight: '1.5rem', textAlign: 'right', width: '120px' }}>Actions</th>
+                <th style={{ paddingLeft: '1.5rem', width: '250px' }}><div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><User size={14} /> Profile</div></th>
+                <th style={{ width: '250px' }}><div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><Mail size={14} /> Contact</div></th>
+                <th style={{ width: '200px' }}><div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><Smartphone size={14} /> Device</div></th>
+                <th style={{ width: '150px' }}><div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><Layers size={14} /> Sessions</div></th>
+                <th style={{ width: '120px' }}><div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><History size={14} /> Last Seen</div></th>
+                <th style={{ paddingRight: '1.5rem', textAlign: 'right', width: '150px' }}>Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -113,7 +113,7 @@ export default async function UsersPage() {
                     <td>
                       <div style={{ fontSize: '0.81rem', color: 'var(--text-2)', fontWeight: 500, marginBottom: '0.2rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{user.email ?? 'no-email@synced.com'}</div>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                        <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#10B981', boxShadow: '0 0 4px #10B981' }} />
+                        <CheckCircle size={10} color="#10B981" />
                         <span style={{ fontSize: '0.65rem', color: 'var(--text-4)', textTransform: 'uppercase', fontWeight: 700, letterSpacing: '0.04em' }}>Verified</span>
                       </div>
                     </td>
@@ -129,34 +129,19 @@ export default async function UsersPage() {
                         </div>
                       </div>
                     </td>
-                    <td>
-                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem', maxHeight: '50px', overflow: 'hidden' }}>
-                        {roles.length > 0
-                          ? roles.slice(0, 3).map(r => (
-                            <span key={r} style={{ 
-                              fontSize: '0.65rem', padding: '0.2rem 0.6rem', borderRadius: '6px', 
-                              background: 'var(--accent-subtle)', color: 'var(--accent-light)', 
-                              fontWeight: 600, border: '1px solid var(--accent-border)'
-                            }}>{r}</span>
-                          ))
-                          : <span style={{ color: 'var(--text-4)', fontSize: '0.75rem', fontStyle: 'italic' }}>Inactive</span>
-                        }
-                        {roles.length > 3 && <span style={{ fontSize: '0.65rem', color: 'var(--text-4)' }}>+{roles.length - 3}</span>}
-                      </div>
-                    </td>
                     <td style={{ whiteSpace: 'nowrap', fontSize: '0.85rem', color: 'var(--text-2)', fontWeight: 500 }}>
                       {timeAgo(lastActive)}
                     </td>
                     <td style={{ paddingRight: '1.5rem', textAlign: 'right' }}>
-                      <Link href={`/users/${user._id}`}
-                        style={{ 
-                          fontSize: '0.75rem', padding: '0.4rem 0.8rem', borderRadius: '8px', 
-                          background: 'rgba(255,255,255,0.03)', border: '1px solid var(--border-strong)', 
-                          color: 'var(--text-2)', textDecoration: 'none', fontWeight: 600,
-                          transition: 'all 0.2s ease', display: 'inline-block'
-                        }}>
-                        Manage
-                      </Link>
+                        <Link href={`/users/${user._id}`}
+                          className="btn btn-ghost"
+                          style={{ 
+                            fontSize: '0.75rem', padding: '0.4rem 0.8rem', borderRadius: '8px', 
+                            textDecoration: 'none', fontWeight: 600,
+                            display: 'inline-flex', alignItems: 'center', gap: '4px'
+                          }}>
+                          Manage <ArrowRight size={14} />
+                        </Link>
                     </td>
                   </tr>
                 );

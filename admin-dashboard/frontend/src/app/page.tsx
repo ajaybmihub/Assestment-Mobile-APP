@@ -1,5 +1,6 @@
 import React from 'react';
 import Link from 'next/link';
+import { Users, PlayCircle, Activity, Repeat, ClipboardList, User, ArrowRight } from 'lucide-react';
 
 async function getData() {
   try {
@@ -119,7 +120,7 @@ export default async function Dashboard() {
       {/* TOP STATS — 4-col desktop, 2-col mobile */}
       <div className="stats-grid" style={{ marginBottom: '1.5rem' }}>
         <div className="stat-card">
-          <div className="stat-card-icon icon-purple">👤</div>
+          <div className="stat-card-icon icon-purple"><Users size={20} /></div>
           <div>
             <div className="stat-label">Total Users</div>
             <div className="stat-value">{totalUsers}</div>
@@ -127,7 +128,7 @@ export default async function Dashboard() {
           </div>
         </div>
         <div className="stat-card">
-          <div className="stat-card-icon icon-blue">▶</div>
+          <div className="stat-card-icon icon-blue"><PlayCircle size={20} /></div>
           <div>
             <div className="stat-label">Total Assessments</div>
             <div className="stat-value">{totalSessions}</div>
@@ -135,7 +136,7 @@ export default async function Dashboard() {
           </div>
         </div>
         <div className="stat-card">
-          <div className="stat-card-icon icon-green">✦</div>
+          <div className="stat-card-icon icon-green"><Activity size={20} /></div>
           <div>
             <div className="stat-label">Active Users</div>
             <div className="stat-value">{activeUsers}</div>
@@ -143,7 +144,7 @@ export default async function Dashboard() {
           </div>
         </div>
         <div className="stat-card">
-          <div className="stat-card-icon icon-amber">🔁</div>
+          <div className="stat-card-icon icon-amber"><Repeat size={20} /></div>
           <div>
             <div className="stat-label">Repeat Candidates</div>
             <div className="stat-value">{multiSessionUsers}</div>
@@ -165,7 +166,9 @@ export default async function Dashboard() {
                 <div className="card-title">Recent Assessments</div>
                 <div className="card-subtitle">Latest candidate sessions synced from the app</div>
               </div>
-              <Link href="/interviews" className="btn btn-ghost" style={{ textDecoration: 'none', whiteSpace: 'nowrap' }}>View all →</Link>
+              <Link href="/interviews" className="btn btn-ghost" style={{ textDecoration: 'none', whiteSpace: 'nowrap' }}>
+                View all <ArrowRight size={14} style={{ marginLeft: '4px' }} />
+              </Link>
             </div>
             <div>
               {recentActivity.length > 0 ? recentActivity.map((iv: any, i: number) => {
@@ -187,28 +190,32 @@ export default async function Dashboard() {
                     className="table-row-hover"
                   >
                     <div style={{
-                      width: '36px', height: '36px', borderRadius: '10px', flexShrink: 0,
-                      background: COLORS[i % COLORS.length] + '20', color: COLORS[i % COLORS.length],
+                      width: '42px', height: '42px', borderRadius: '12px', flexShrink: 0,
+                      background: COLORS[i % COLORS.length] + '20', 
+                      border: '1px solid ' + COLORS[i % COLORS.length] + '40',
+                      color: COLORS[i % COLORS.length],
                       display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      fontSize: '0.9rem', fontWeight: 700,
+                      fontSize: '0.9rem', fontWeight: 800,
                     }}>
                       {(name[0] || 'S').toUpperCase()}
                     </div>
-                    <div style={{ flex: 1, overflow: 'hidden' }}>
-                      <div style={{ fontWeight: 600, fontSize: '0.875rem', color: 'var(--text-1)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{name}</div>
-                      <div style={{ fontSize: '0.72rem', color: 'var(--text-4)' }}>{iv.role || 'Practice Session'}</div>
+                     <div style={{ flex: 1, overflow: 'hidden' }}>
+                      <div style={{ fontWeight: 700, fontSize: '0.9rem', color: 'var(--text-1)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', marginBottom: '0.15rem' }}>{name}</div>
+                      <div style={{ fontSize: '0.7rem', color: 'var(--text-4)' }}>{iv.role || 'Practice Session'}</div>
                     </div>
                     {/* Score — hidden on smallest mobile */}
                     <div style={{ textAlign: 'right', flexShrink: 0 }} className="col-hide-mobile">
                       <div style={{ fontSize: '0.875rem', fontWeight: 700, color: col }}>{scoreStr}</div>
                       <div style={{ fontSize: '0.65rem', color: 'var(--text-4)' }}>{timeAgo(iv.start_time)}</div>
                     </div>
-                    <div style={{ fontSize: '0.7rem', color: 'var(--accent-light)', fontWeight: 600, whiteSpace: 'nowrap' }}>View →</div>
+                    <div style={{ fontSize: '0.7rem', color: 'var(--accent)', fontWeight: 600, whiteSpace: 'nowrap', display: 'flex', alignItems: 'center' }}>
+                      Detail <ArrowRight size={12} style={{ marginLeft: '4px' }} />
+                    </div>
                   </Link>
                 );
               }) : (
                 <div className="empty-state">
-                  <div className="empty-icon">📋</div>
+                  <div className="empty-icon"><ClipboardList size={40} /></div>
                   <div className="empty-title">No assessments yet</div>
                   <div className="empty-sub">When users complete interviews on the app, they will appear here.</div>
                 </div>
@@ -231,7 +238,7 @@ export default async function Dashboard() {
                       <div style={{ fontSize: '0.78rem', fontWeight: 500, color: 'var(--text-2)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '160px' }}>{role}</div>
                       <span style={{ fontSize: '0.72rem', fontWeight: 700, color: COLORS[i % COLORS.length] }}>{count} sessions</span>
                     </div>
-                    <div style={{ height: '4px', background: 'rgba(255,255,255,0.06)', borderRadius: '100px', overflow: 'hidden' }}>
+                    <div style={{ height: '6px', background: 'var(--border)', borderRadius: '100px', overflow: 'hidden' }}>
                       <div style={{ height: '100%', width: `${pct}%`, background: COLORS[i % COLORS.length], borderRadius: '100px', transition: 'width 0.5s' }} />
                     </div>
                   </div>
@@ -250,7 +257,9 @@ export default async function Dashboard() {
               <div className="card-title">Candidate Activity</div>
               <div className="card-subtitle">Users, devices, and session counts</div>
             </div>
-            <Link href="/users" className="btn btn-ghost" style={{ textDecoration: 'none', whiteSpace: 'nowrap' }}>View all →</Link>
+            <Link href="/users" className="btn btn-ghost" style={{ textDecoration: 'none', whiteSpace: 'nowrap' }}>
+              View all <ArrowRight size={14} style={{ marginLeft: '4px' }} />
+            </Link>
           </div>
           <div style={{ overflowX: 'auto' }}>
             <table className="data-table">
@@ -275,14 +284,21 @@ export default async function Dashboard() {
                     return (
                       <tr key={userId}>
                         <td>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                            <div className="avatar" style={{ background: COLORS[idx % COLORS.length] + '20', color: COLORS[idx % COLORS.length] }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.875rem' }}>
+                            <div style={{ 
+                                width: '40px', height: '40px', borderRadius: '12px',
+                                background: COLORS[idx % COLORS.length] + '20',
+                                border: '1px solid ' + COLORS[idx % COLORS.length] + '40',
+                                color: COLORS[idx % COLORS.length],
+                                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                fontSize: '0.875rem', fontWeight: 800
+                            }}>
                               {(name[0] || 'U').toUpperCase()}
                             </div>
                             <div>
-                              <div style={{ fontWeight: 600, color: 'var(--text-1)', fontSize: '0.875rem' }}>{name}</div>
+                              <div style={{ fontWeight: 700, color: 'var(--text-1)', fontSize: '0.875rem', marginBottom: '0.15rem' }}>{name}</div>
                               {isRepeat && (
-                                <span style={{ fontSize: '0.6rem', background: 'rgba(34,211,238,0.1)', color: 'var(--accent-light)', padding: '0.1rem 0.4rem', borderRadius: '4px', fontWeight: 700 }}>REPEAT</span>
+                                <span style={{ fontSize: '0.6rem', background: 'var(--accent-subtle)', color: 'var(--accent)', padding: '0.1rem 0.4rem', borderRadius: '4px', fontWeight: 700 }}>REPEAT</span>
                               )}
                             </div>
                           </div>
@@ -290,8 +306,8 @@ export default async function Dashboard() {
                         <td className="col-hide-mobile" style={{ fontSize: '0.8rem', color: 'var(--text-3)' }}>—</td>
                         <td>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                            <div style={{ width: '52px', height: '4px', background: 'rgba(255,255,255,0.06)', borderRadius: '100px', overflow: 'hidden' }}>
-                              <div style={{ height: '100%', width: `${Math.min(100, sessions * 20)}%`, background: 'linear-gradient(90deg, #7C3AED, #22D3EE)', borderRadius: '100px' }} />
+                            <div style={{ width: '52px', height: '6px', background: 'var(--border)', borderRadius: '100px', overflow: 'hidden' }}>
+                              <div style={{ height: '100%', width: `${Math.min(100, sessions * 20)}%`, background: 'linear-gradient(90deg, var(--accent), #EC4899)', borderRadius: '100px' }} />
                             </div>
                             <span style={{ fontWeight: 700, fontSize: '0.875rem' }}>{sessions}</span>
                           </div>
@@ -310,7 +326,7 @@ export default async function Dashboard() {
                   <tr>
                     <td colSpan={5}>
                       <div className="empty-state" style={{ padding: '2.5rem' }}>
-                        <div className="empty-icon">👤</div>
+                        <div className="empty-icon"><User size={40} /></div>
                         <div className="empty-title">No candidates yet</div>
                       </div>
                     </td>

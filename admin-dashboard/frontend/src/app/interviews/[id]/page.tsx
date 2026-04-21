@@ -1,5 +1,6 @@
 import React from 'react';
 import Link from 'next/link';
+import { Search, Video, VideoOff, ShieldCheck, MessageCircle, User, ArrowLeft, ChevronDown, Info } from 'lucide-react';
 
 async function getInterviewWithUser(id: string) {
   try {
@@ -56,10 +57,12 @@ export default async function InterviewDetailPage({
   if (!iv) {
     return (
       <div className="empty-state" style={{ minHeight: '60vh' }}>
-        <div className="empty-icon">🔍</div>
+        <div className="empty-icon"><Search size={48} /></div>
         <div className="empty-title">Session not found</div>
         <div className="empty-sub"><code style={{ fontSize: '0.75rem' }}>{id}</code></div>
-        <Link href="/interviews" style={{ marginTop: '1rem', color: 'var(--accent-light)', fontSize: '0.875rem' }}>← Back to Assessments</Link>
+        <Link href="/interviews" style={{ marginTop: '1rem', color: 'var(--accent)', fontSize: '0.875rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
+          <ArrowLeft size={16} /> Back to Assessments
+        </Link>
       </div>
     );
   }
@@ -103,7 +106,7 @@ export default async function InterviewDetailPage({
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '1rem' }}>
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.625rem', marginBottom: '0.5rem', flexWrap: 'wrap' }}>
-              <span style={{ fontSize: '0.625rem', fontWeight: 800, background: 'var(--accent-subtle)', color: 'var(--accent-light)', padding: '0.2rem 0.6rem', borderRadius: '4px', letterSpacing: '0.05em', textTransform: 'uppercase' }}>Analysis Complete</span>
+              <span style={{ fontSize: '0.625rem', fontWeight: 800, background: 'var(--accent-subtle)', color: 'var(--accent)', padding: '0.2rem 0.6rem', borderRadius: '4px', letterSpacing: '0.05em', textTransform: 'uppercase' }}>Analysis Complete</span>
               <span style={{ fontSize: '0.72rem', color: 'var(--text-4)' }}>Ref: {iv._id?.slice(-12)}</span>
             </div>
             <h1 className="page-title" style={{ fontSize: '1.75rem', marginBottom: '0.4rem' }}>{iv.role || 'Interview Session'}</h1>
@@ -130,7 +133,7 @@ export default async function InterviewDetailPage({
         >
           {/* Video */}
           {iv.video_url ? (
-            <div style={{ position: 'relative', borderRadius: '20px', overflow: 'hidden', border: '1px solid rgba(255,255,255,0.08)', background: '#0a0a0c', aspectRatio: '16/10', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <div style={{ position: 'relative', borderRadius: '20px', overflow: 'hidden', border: '1px solid var(--border)', background: '#0a0a0c', aspectRatio: '16/10', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <video src={iv.video_url} controls style={{ width: '100%', height: '100%', display: 'block', objectFit: 'contain' }} />
               <div style={{ position: 'absolute', top: '1rem', left: '1rem', pointerEvents: 'none', zIndex: 10 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'rgba(0,0,0,0.6)', padding: '0.4rem 0.75rem', borderRadius: '8px', backdropFilter: 'blur(10px)', border: '1px solid rgba(255,255,255,0.1)' }}>
@@ -140,8 +143,8 @@ export default async function InterviewDetailPage({
               </div>
             </div>
           ) : (
-            <div style={{ width: '100%', aspectRatio: '16/10', background: 'linear-gradient(135deg, #111118 0%, #09090b 100%)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '20px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '1rem' }}>
-              <div style={{ fontSize: '2.5rem', opacity: 0.2 }}>🎞️</div>
+            <div style={{ width: '100%', aspectRatio: '16/10', background: 'linear-gradient(135deg, var(--bg-elevated) 0%, var(--bg) 100%)', border: '1px solid var(--border)', borderRadius: '20px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '1rem' }}>
+              <div style={{ opacity: 0.2 }}><VideoOff size={64} /></div>
               <div style={{ textAlign: 'center' }}>
                 <div style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--text-3)', marginBottom: '0.25rem' }}>No Video Available</div>
                 <div style={{ fontSize: '0.72rem', color: 'var(--text-4)' }}>Video not synced or unavailable</div>
@@ -159,9 +162,11 @@ export default async function InterviewDetailPage({
             </div>
 
             {/* Integrity & Session Report */}
-            <div className="card" style={{ padding: '1.25rem', background: 'rgba(34,211,238,0.03)', border: '1px solid var(--accent-border)', borderRadius: '16px' }}>
+            <div className="card" style={{ padding: '1.25rem', background: 'var(--accent-subtle)', border: '1px solid var(--accent-border)', borderRadius: '16px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
-                <span style={{ fontSize: '0.65rem', fontWeight: 800, color: 'var(--accent-light)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Integrity Report</span>
+                <span style={{ fontSize: '0.65rem', fontWeight: 800, color: 'var(--accent)', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                  <ShieldCheck size={14} /> Integrity Report
+                </span>
                 <span style={{ fontSize: '0.65rem', color: 'var(--text-4)', fontWeight: 600 }}>{pairs.length} Qs · {pairs.filter(p => p.skipped).length} Skips</span>
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1rem' }}>
@@ -186,7 +191,7 @@ export default async function InterviewDetailPage({
               <div style={{ fontSize: '0.95rem', fontWeight: 600, color: 'var(--text-1)' }}>Interview Transcript</div>
               <div style={{ fontSize: '0.72rem', color: 'var(--text-3)' }}>{pairs.length} Q&A exchanges</div>
             </div>
-            <div className="chevron" style={{ fontSize: '1.25rem', color: 'var(--text-3)' }}>⌄</div>
+            <div className="chevron" style={{ fontSize: '1.25rem', color: 'var(--text-3)' }}><ChevronDown size={20} /></div>
           </summary>
           <div style={{ borderTop: '1px solid var(--border)' }}>
             {pairs.length > 0 ? (
@@ -194,13 +199,17 @@ export default async function InterviewDetailPage({
                 {pairs.map((p, idx) => (
                   <div key={idx} style={{ padding: '1.125rem 1.5rem', borderBottom: idx < pairs.length - 1 ? '1px solid var(--border)' : 'none', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
                     <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'flex-start' }}>
-                      <div style={{ width: '26px', height: '26px', borderRadius: '7px', background: 'var(--accent-subtle)', border: '1px solid var(--accent-border)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.62rem', fontWeight: 800, color: 'var(--accent-light)', flexShrink: 0 }}>Q</div>
+                      <div style={{ width: '26px', height: '26px', borderRadius: '7px', background: 'var(--accent-subtle)', border: '1px solid var(--accent-border)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--accent)', flexShrink: 0 }}>
+                        <MessageCircle size={14} />
+                      </div>
                       <div style={{ fontSize: '0.875rem', color: 'var(--text-1)', lineHeight: 1.5, fontWeight: 600, marginTop: '4px' }}>{p.q}</div>
                     </div>
                     {p.a && (
                       <div style={{ display: 'flex', gap: '0.75rem', paddingLeft: '0.25rem' }}>
-                        <div style={{ width: '22px', height: '22px', borderRadius: '6px', background: 'rgba(255,255,255,0.04)', border: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.58rem', fontWeight: 800, color: 'var(--text-3)', flexShrink: 0, marginTop: '2px' }}>A</div>
-                        <div style={{ fontSize: '0.82rem', color: p.skipped ? 'var(--amber)' : 'var(--text-2)', lineHeight: 1.6, fontStyle: p.skipped ? 'italic' : 'normal', background: 'rgba(255,255,255,0.02)', padding: '0.75rem 1rem', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.03)', flex: 1 }}>
+                        <div style={{ width: '22px', height: '22px', borderRadius: '6px', background: 'var(--bg-elevated)', border: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-4)', flexShrink: 0, marginTop: '2px' }}>
+                          <User size={12} />
+                        </div>
+                        <div style={{ fontSize: '0.82rem', color: p.skipped ? 'var(--amber)' : 'var(--text-2)', lineHeight: 1.6, fontStyle: p.skipped ? 'italic' : 'normal', background: 'var(--bg-elevated)', padding: '0.75rem 1rem', borderRadius: '8px', border: '1px solid var(--border)', flex: 1 }}>
                           {p.skipped ? '⚠️ Candidate skipped this question.' : p.a}
                         </div>
                       </div>
@@ -216,8 +225,8 @@ export default async function InterviewDetailPage({
 
         {/* Footer */}
         <div style={{ display: 'flex', justifyContent: 'center', paddingTop: '0.5rem' }}>
-          <Link href="/interviews" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.875rem', color: 'var(--text-3)', textDecoration: 'none', padding: '0.75rem 2rem', borderRadius: '12px', border: '1px solid var(--border)' }}>
-            ← Back to Assessments
+          <Link href="/interviews" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.875rem', color: 'var(--text-3)', textDecoration: 'none', padding: '0.75rem 2rem', borderRadius: '12px', border: '1px solid var(--border)', transition: 'all 0.2s' }} className="btn-hover-neu">
+            <ArrowLeft size={16} /> Back to Assessments
           </Link>
         </div>
       </div>
@@ -227,9 +236,11 @@ export default async function InterviewDetailPage({
 
 function QuickTile({ label, value, accent, warning }: { label: string; value: any; accent?: boolean; warning?: boolean }) {
   return (
-    <div style={{ padding: '0.875rem 1rem', background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: '14px', display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>
-      <div style={{ fontSize: '0.6rem', fontWeight: 700, color: 'var(--text-4)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>{label}</div>
-      <div style={{ fontSize: '1.2rem', fontWeight: 800, color: warning ? '#EF4444' : accent ? 'var(--accent-light)' : 'var(--text-1)', letterSpacing: '-0.02em' }}>{value}</div>
+    <div style={{ padding: '0.875rem 1rem', background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: '14px', boxShadow: 'var(--shadow-card)', display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>
+      <div style={{ fontSize: '0.6rem', fontWeight: 700, color: 'var(--text-4)', textTransform: 'uppercase', letterSpacing: '0.08em', display: 'flex', alignItems: 'center', gap: '4px' }}>
+        <Info size={10} /> {label}
+      </div>
+      <div style={{ fontSize: '1.2rem', fontWeight: 800, color: warning ? '#EF4444' : accent ? 'var(--accent)' : 'var(--text-1)', letterSpacing: '-0.02em' }}>{value}</div>
     </div>
   );
 }

@@ -3,12 +3,13 @@
 import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { LayoutDashboard, PlayCircle, Users, Mail, Wallet, Shield, Zap } from 'lucide-react';
 
 const NAV = [
-  { label: 'Overview',        icon: '◈', mobileIcon: '◈', href: '/'           },
-  { label: 'Assessments',     icon: '▶', mobileIcon: '▶', href: '/interviews' },
-  { label: 'Users',           icon: '◉', mobileIcon: '◉', href: '/users'      },
-  { label: 'Support',         icon: '✉', mobileIcon: '✉', href: '/tickets'    },
+  { label: 'Overview',        icon: <LayoutDashboard size={18} />, href: '/'           },
+  { label: 'Assessments',     icon: <PlayCircle size={18} />,     href: '/interviews' },
+  { label: 'Users',           icon: <Users size={18} />,          href: '/users'      },
+  { label: 'Support',         icon: <Mail size={18} />,           href: '/tickets'    },
 ];
 
 export default function Sidebar() {
@@ -32,19 +33,53 @@ export default function Sidebar() {
             const isActive = pathname === item.href || (item.href !== '/' && pathname.startsWith(item.href));
             return (
               <Link key={item.href} href={item.href} className={`nav-item${isActive ? ' active' : ''}`}>
-                <span className="nav-icon" style={{ fontSize: '14px', width: '18px', textAlign: 'center' }}>{item.icon}</span>
+                <span className="nav-icon">{item.icon}</span>
                 <span>{item.label}</span>
               </Link>
             );
           })}
         </nav>
 
+        {/* Footer card — mirrors the reference image upgrade/info block */}
         <div className="sidebar-footer">
-          <div className="status-indicator">
-            <div className="status-dot" />
-            <span className="status-text">System Online</span>
+          <div style={{ background: 'rgba(255,255,255,0.03)', borderRadius: '14px', padding: '1rem', border: '1px solid rgba(255,255,255,0.06)' }}>
+            <div className="status-indicator">
+              <div className="status-dot" />
+              <span className="status-text">System Online</span>
+            </div>
+            <p style={{ fontSize: '0.65rem', color: 'rgba(255,255,255,0.4)', lineHeight: 1.4, marginTop: '0.5rem' }}>
+              Enterprise grade monitoring active for all regions.
+            </p>
+            <div style={{ marginTop: '1rem' }}>
+              <a
+                href="#"
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '8px',
+                  padding: '0.6rem',
+                  borderRadius: '10px',
+                  background: 'linear-gradient(135deg, #7C3AED, #EC4899)',
+                  color: 'white',
+                  fontSize: '0.78rem',
+                  fontWeight: 700,
+                  textDecoration: 'none',
+                  boxShadow: '0 4px 15px rgba(124,58,237,0.3)',
+                }}
+              >
+                <Zap size={14} fill="currentColor" /> Upgrade Plan
+              </a>
+            </div>
           </div>
-          <div style={{ padding: '0.5rem 0.75rem 0', fontSize: '0.65rem', color: 'var(--text-4)', fontWeight: 600 }}>V1.5.0-STAGE</div>
+          
+          <div style={{ marginTop: '1.25rem', paddingTop: '1.25rem', borderTop: '1px solid rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+            <div className="avatar" style={{ width: '32px', height: '32px', background: 'rgba(255,255,255,0.1)', color: 'white', fontSize: '0.8rem', fontWeight: 700 }}>A</div>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontSize: '0.75rem', fontWeight: 600, color: '#fff', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>Admin User</div>
+              <div style={{ fontSize: '0.62rem', color: 'rgba(255,255,255,0.4)' }}>v1.5.0-premium</div>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -66,7 +101,7 @@ export default function Sidebar() {
           const isActive = pathname === item.href || (item.href !== '/' && pathname.startsWith(item.href));
           return (
             <Link key={item.href} href={item.href} className={`mobile-nav-item${isActive ? ' active' : ''}`}>
-              <span className="mob-icon">{item.mobileIcon}</span>
+              <span className="mob-icon">{item.icon}</span>
               {item.label}
             </Link>
           );
