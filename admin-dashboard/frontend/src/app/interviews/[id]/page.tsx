@@ -77,6 +77,14 @@ export default async function InterviewDetailPage({
   const ts = typeof rawTs === 'object' && rawTs?.$date ? new Date(rawTs.$date) : new Date(rawTs);
   const dateStr = ts.toLocaleString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
 
+  const isMcq = iv.role?.startsWith('MCQ:');
+  let mcqData: any = null;
+  if (isMcq && iv.feedback) {
+    try {
+      mcqData = typeof iv.feedback === 'string' ? JSON.parse(iv.feedback) : iv.feedback;
+    } catch (e) {}
+  }
+
   return (
     <div style={{ maxWidth: '1100px', margin: '0 auto', paddingBottom: '3rem' }}>
       {/* Animations */}
@@ -107,7 +115,7 @@ export default async function InterviewDetailPage({
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.625rem', marginBottom: '0.5rem', flexWrap: 'wrap' }}>
               <span style={{ fontSize: '0.625rem', fontWeight: 800, background: 'var(--accent-subtle)', color: 'var(--accent)', padding: '0.2rem 0.6rem', borderRadius: '4px', letterSpacing: '0.05em', textTransform: 'uppercase' }}>Analysis Complete</span>
-              <span style={{ fontSize: '0.72rem', color: 'var(--text-4)' }}>Ref: {iv._id?.slice(-12)}</span>
+              <span style={{ fontSize: '0.72rem', color: 'var(--text-4)' }}>Ref: {iv._id?.replace('sess_', '')}</span>
             </div>
             <h1 className="page-title" style={{ fontSize: '1.75rem', marginBottom: '0.4rem' }}>{iv.role || 'Interview Session'}</h1>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem', fontSize: '0.82rem', color: 'var(--text-3)' }}>
@@ -126,11 +134,70 @@ export default async function InterviewDetailPage({
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
 
-        {/* Video + Quick Metrics */}
-        <div
-          className="iv-detail-grid"
-          style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1.8fr) minmax(0, 1.2fr)', gap: '1.5rem', alignItems: 'start' }}
-        >
+        {isMcq ? (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+            <div className="card" style={{ padding: '1.5rem', borderRadius: '20px', background: 'var(--bg-card)', border: '1px solid var(--border)' }}>
+              <div style={{ fontSize: '1.125rem', fontWeight: 700, color: 'var(--text-1)', marginBottom: '1.25rem' }}>Test Performance</div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '1rem' }}>
+                <QuickTile label="Score" value={scores.overall || '—'} accent />
+                <QuickTile label="Time Taken" value={mcqData?.timeTakenSeconds ? `${Math.floor(mcqData.timeTakenSeconds / 60)}m ${mcqData.timeTakenSeconds % 60}s` : 'N/A'} />
+                <QuickTile label="Questions" value={mcqData?.questions?.length || '—'} />
+                <QuickTile label="Result" value={iv.recommendation || 'Completed'} />
+              </div>
+            </div>
+
+            <div className="card" style={{ padding: '1.5rem', borderRadius: '20px', background: 'var(--bg-card)', border: '1px solid var(--border)' }}>
+              <div style={{ fontSize: '1.125rem', fontWeight: 700, color: 'var(--text-1)', marginBottom: '1.5rem' }}>Detailed Review</div>
+              {mcqData?.questions ? mcqData.questions.map((q: string, idx: number) => {
+                const options = mcqData.options[idx] || [];
+                const correctOpt = mcqData.correctAnswers[idx];
+                const userOpt = mcqData.rawAnswers[idx];
+                const isCorrect = correctOpt === userOpt;
+
+                return (
+                  <div key={idx} style={{ marginBottom: '1.5rem', paddingBottom: '1.5rem', borderBottom: idx < mcqData.questions.length - 1 ? '1px solid var(--border)' : 'none' }}>
+                    <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'flex-start', marginBottom: '1.25rem' }}>
+                      <div style={{ width: '28px', height: '28px', borderRadius: '8px', background: isCorrect ? 'rgba(16, 185, 129, 0.15)' : 'rgba(239, 68, 68, 0.15)', color: isCorrect ? '#10B981' : '#EF4444', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: '0.85rem', flexShrink: 0 }}>
+                        {idx + 1}
+                      </div>
+                      <div style={{ fontSize: '0.95rem', color: 'var(--text-1)', fontWeight: 600, lineHeight: 1.5, marginTop: '2px' }}>{q}</div>
+                    </div>
+                    <div style={{ display: 'grid', gap: '0.6rem', paddingLeft: '2.5rem' }}>
+                      {options.map((opt: string, oIdx: number) => {
+                        const optLetter = String.fromCharCode(65 + oIdx);
+                        const isUserAns = userOpt === optLetter;
+                        const isActualCorrect = correctOpt === optLetter;
+                        
+                        let bg = 'var(--bg-elevated)';
+                        let border = 'var(--border)';
+                        let color = 'var(--text-2)';
+                        
+                        if (isActualCorrect) {
+                          bg = 'rgba(16, 185, 129, 0.1)'; border = '#10B981'; color = '#10B981';
+                        } else if (isUserAns && !isCorrect) {
+                          bg = 'rgba(239, 68, 68, 0.1)'; border = '#EF4444'; color = '#EF4444';
+                        }
+
+                        return (
+                          <div key={oIdx} style={{ padding: '0.75rem 1rem', borderRadius: '10px', background: bg, border: `1px solid ${border}`, display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                            <div style={{ fontWeight: 700, color, fontSize: '0.9rem' }}>{optLetter}</div>
+                            <div style={{ fontSize: '0.875rem', color }}>{opt}</div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              }) : <div className="empty-state">No detailed data available.</div>}
+            </div>
+          </div>
+        ) : (
+          <>
+            {/* Video + Quick Metrics */}
+            <div
+              className="iv-detail-grid"
+              style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1.8fr) minmax(0, 1.2fr)', gap: '1.5rem', alignItems: 'start' }}
+            >
           {/* Video */}
           {iv.video_url ? (
             <div style={{ position: 'relative', borderRadius: '20px', overflow: 'hidden', border: '1px solid var(--border)', background: '#0a0a0c', aspectRatio: '16/10', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -222,6 +289,8 @@ export default async function InterviewDetailPage({
             )}
           </div>
         </details>
+          </>
+        )}
 
         {/* Footer */}
         <div style={{ display: 'flex', justifyContent: 'center', paddingTop: '0.5rem' }}>

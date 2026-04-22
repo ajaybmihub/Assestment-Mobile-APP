@@ -133,13 +133,18 @@ export default async function InterviewsPage() {
                           <div style={{ overflow: 'hidden' }}>
                             <div style={{ fontWeight: 700, color: 'var(--text-1)', fontSize: '0.9rem', marginBottom: '0.2rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{userName}</div>
                             <div style={{ fontSize: '0.65rem', color: 'var(--text-4)', fontFamily: 'monospace', letterSpacing: '0.04em' }}>
-                              ID: <span style={{ color: 'var(--text-3)' }}>{iv._id?.slice(-8)}</span>
+                              ID: <span style={{ color: 'var(--text-3)' }}>{iv._id?.replace('sess_', '')}</span>
                             </div>
                           </div>
                         </div>
                       </td>
                       <td>
-                        <span style={{ fontSize: '0.72rem', padding: '0.3rem 0.65rem', borderRadius: '6px', background: 'var(--accent-subtle)', color: 'var(--accent-light)', fontWeight: 600, border: '1px solid var(--accent-border)' }}>
+                        <span style={{ 
+                          fontSize: '0.72rem', padding: '0.3rem 0.65rem', borderRadius: '6px', fontWeight: 600, border: '1px solid',
+                          background: iv.role?.startsWith('MCQ:') ? 'rgba(59, 130, 246, 0.15)' : 'var(--accent-subtle)', 
+                          color: iv.role?.startsWith('MCQ:') ? '#60A5FA' : 'var(--accent-light)', 
+                          borderColor: iv.role?.startsWith('MCQ:') ? 'rgba(59, 130, 246, 0.3)' : 'var(--accent-border)' 
+                        }}>
                           {iv.role || 'Practice'}
                         </span>
                       </td>
@@ -214,7 +219,12 @@ export default async function InterviewsPage() {
                   )}
                 </div>
                   <div className="report-card-footer">
-                    <span style={{ fontSize: '0.72rem', padding: '0.25rem 0.6rem', borderRadius: '6px', background: 'var(--accent-subtle)', color: 'var(--accent)', fontWeight: 600, border: '1px solid var(--accent-border)' }}>
+                    <span style={{ 
+                      fontSize: '0.72rem', padding: '0.25rem 0.6rem', borderRadius: '6px', fontWeight: 600, border: '1px solid',
+                      background: iv.role?.startsWith('MCQ:') ? 'rgba(59, 130, 246, 0.15)' : 'var(--accent-subtle)', 
+                      color: iv.role?.startsWith('MCQ:') ? '#60A5FA' : 'var(--accent)', 
+                      borderColor: iv.role?.startsWith('MCQ:') ? 'rgba(59, 130, 246, 0.3)' : 'var(--accent-border)' 
+                    }}>
                       {iv.role || 'Practice Session'}
                     </span>
                     <span style={{ fontSize: '0.75rem', color: 'var(--accent)', fontWeight: 600, display: 'flex', alignItems: 'center' }}>
