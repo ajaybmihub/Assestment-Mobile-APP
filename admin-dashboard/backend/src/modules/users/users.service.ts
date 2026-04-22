@@ -73,15 +73,6 @@ export class UsersService {
       const existingUser = await this.userModel.findById(_id).exec();
       this.logger.log(`AI DEBUG: Existing user found? ${!!existingUser}. Has summary? ${!!existingUser?.resume_summary}`);
       
-      const hasResume = !!rest.resume_text;
-
-      if (hasResume) {
-        this.logger.log(`AI: Forcing Gemini summarization for ${_id} as requested...`);
-        const summary = await this.aiService.summarizeResume(rest.resume_text);
-        update['resume_summary'] = summary;
-        this.logger.log(`AI: Successfully generated and forced summary for ${_id}.`);
-      }
-
       const result = await this.userModel.findOneAndUpdate(
         { _id: _id },
         { $set: update },

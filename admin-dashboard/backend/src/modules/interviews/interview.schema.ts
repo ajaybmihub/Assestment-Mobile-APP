@@ -6,6 +6,7 @@ class ChatMessage {
   @Prop() role: string;
   @Prop() content: string;
   @Prop() timestamp: Date;
+  @Prop() question_source?: string; // 'general' or 'personalized'
 }
 
 @Schema({ timestamps: true })
