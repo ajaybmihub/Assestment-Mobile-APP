@@ -131,7 +131,12 @@ export default async function UserDetailPage({ params }: { params: Promise<{ id:
                   return (
                     <tr key={iv._id} style={{ height: '64px' }}>
                       <td style={{ paddingLeft: '1.5rem' }}>
-                        <span style={{ fontSize: '0.75rem', padding: '0.35rem 0.8rem', borderRadius: '100px', background: 'var(--accent-subtle)', color: 'var(--accent-light)', fontWeight: 600 }}>
+                        <span style={{ 
+                          fontSize: '0.75rem', padding: '0.35rem 0.8rem', borderRadius: '100px', fontWeight: 600, border: '1px solid',
+                          background: iv.role?.startsWith('MCQ:') ? 'rgba(59, 130, 246, 0.15)' : 'var(--accent-subtle)', 
+                          color: iv.role?.startsWith('MCQ:') ? '#60A5FA' : 'var(--accent-light)', 
+                          borderColor: iv.role?.startsWith('MCQ:') ? 'rgba(59, 130, 246, 0.3)' : 'transparent' 
+                        }}>
                           {iv.role ?? 'General'}
                         </span>
                       </td>
