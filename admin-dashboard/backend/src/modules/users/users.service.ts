@@ -73,6 +73,18 @@ export class UsersService {
       const existingUser = await this.userModel.findById(_id).exec();
       this.logger.log(`AI DEBUG: Existing user found? ${!!existingUser}. Has summary? ${!!existingUser?.resume_summary}`);
       
+      // --- AI LOGIC: Auto-generate summary if resume text is provided but summary is missing ---
+      if (update['resume_text'] && (!update['resume_summary'] || update['resume_text'] !== existingUser?.resume_text)) {
+        this.logger.log(`AI: New resume text detected for ${_id}. Generating fresh summary...`);
+        try {
+          const summary = await this.aiService.summarizeResume(update['resume_text']);
+          update['resume_summary'] = summary;
+          this.logger.log(`AI: Successfully generated summary for ${_id}`);
+        } catch (e) {
+          this.logger.error(`AI Summary generation failed for ${_id}: ${e.message}`);
+        }
+      }
+
       const result = await this.userModel.findOneAndUpdate(
         { _id: _id },
         { $set: update },
