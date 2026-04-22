@@ -11,6 +11,7 @@ import { TicketsModule } from './modules/tickets/tickets.module';
 import { MonitorModule } from './modules/monitor/monitor.module';
 import { AiModule } from './modules/ai/ai.module';
 import { QuestionsModule } from './modules/questions/questions.module';
+import { JobsModule } from './modules/jobs/jobs.module';
 
 @Module({
   imports: [
@@ -30,6 +31,7 @@ import { QuestionsModule } from './modules/questions/questions.module';
     MonitorModule,
     AiModule,
     QuestionsModule,
+    JobsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

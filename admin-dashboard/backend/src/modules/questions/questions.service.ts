@@ -49,4 +49,62 @@ export class QuestionsService {
         ).exec();
     }
   }
+
+  async getQuestionsForUser(userId: string, difficulty: string, jobId?: number, limit: number = 10) {
+    this.logger.log(`Fetching questions for user: ${userId}, Job: ${jobId}, Level: ${difficulty}`);
+
+    const personalizedQuery: any = {
+        user_id: userId,
+        difficulty: difficulty,
+        isAttempted: false
+    };
+    if (jobId !== undefined) personalizedQuery.job_id = jobId;
+
+    // 1. Fetch non-attempted personalized questions
+    const personalized = await this.personalizedModel.find(personalizedQuery).limit(limit).exec();
+
+    const generalQuery: any = {
+        difficulty: difficulty,
+        attempted_by: { $ne: userId }
+    };
+    if (jobId !== undefined) generalQuery.job_id = jobId;
+
+    // 2. Fetch non-attempted general questions for this difficulty and job
+    const general = await this.generalModel.find(generalQuery).limit(limit).exec();
+
+    // 3. Combine both sets
+    let combined = [...personalized, ...general];
+
+    // 4. Shuffle the combined list
+    combined = this.shuffleArray(combined);
+
+    // 5. Slice to requested limit
+    return combined.slice(0, limit);
+  }
+
+  async markQuestionsAsAttempted(userId: string, questionIds: string[]) {
+    this.logger.log(`Marking questions as attempted for user: ${userId}`);
+    
+    for (const qId of questionIds) {
+        if (qId.startsWith('pers_')) {
+            await this.personalizedModel.updateOne(
+                { question_id: qId },
+                { $set: { isAttempted: true } }
+            ).exec();
+        } else {
+            await this.generalModel.updateOne(
+                { question_id: qId },
+                { $addToSet: { attempted_by: userId } }
+            ).exec();
+        }
+    }
+  }
+
+  private shuffleArray(array: any[]) {
+    for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]];
+    }
+    return array;
+  }
 }

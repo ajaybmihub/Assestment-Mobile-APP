@@ -8,7 +8,7 @@ export class GeneralQuestion extends Document {
   @Prop() job_id: number;
   @Prop() skill: string;
   @Prop() difficulty: string;
-  @Prop({ default: false }) isAttempted: boolean;
+  @Prop({ type: [String], default: [] }) attempted_by: string[]; // user_ids
 }
 
 export const GeneralQuestionSchema = SchemaFactory.createForClass(GeneralQuestion);
