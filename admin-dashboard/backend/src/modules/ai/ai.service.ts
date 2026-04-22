@@ -1,11 +1,13 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { GoogleGenerativeAI } from '@google/generative-ai';
+import Groq from 'groq-sdk';
 
 @Injectable()
 export class AiService {
   private readonly logger = new Logger(AiService.name);
   private genAI: GoogleGenerativeAI;
+  private groq: Groq;
 
   constructor(private configService: ConfigService) {
     const apiKey = this.configService.get<string>('GEMINI_API_KEY');
@@ -13,6 +15,13 @@ export class AiService {
       this.genAI = new GoogleGenerativeAI(apiKey);
     } else {
       this.logger.warn('GEMINI_API_KEY is not set in environment variables');
+    }
+
+    const groqApiKey = this.configService.get<string>('GROQ_API_KEY');
+    if (groqApiKey) {
+      this.groq = new Groq({ apiKey: groqApiKey });
+    } else {
+      this.logger.warn('GROQ_API_KEY is not set in environment variables');
     }
   }
 
@@ -130,7 +139,39 @@ Return ONLY a JSON array of EXACTLY 10 questions:
       }
     }
 
-    this.logger.error(`All models failed for questions. Last error: ${lastError?.message}`);
+    this.logger.error(`All Gemini models failed for questions. Last error: ${lastError?.message}`);
+    
+    // GROQ FALLBACK
+    if (this.groq) {
+      this.logger.log('Attempting Groq fallback for question generation...');
+      try {
+        const chatCompletion = await this.groq.chat.completions.create({
+          messages: [{ role: 'user', content: prompt }],
+          model: 'llama3-70b-8192',
+          temperature: 0.7,
+        });
+
+        const text = chatCompletion.choices[0]?.message?.content || '[]';
+        this.logger.log('Successfully generated questions using Groq fallback.');
+        
+        try {
+          const cleanedText = text.replace(/```json/g, '').replace(/```/g, '').trim();
+          const jsonMatch = cleanedText.match(/\[.*\]/s);
+          if (jsonMatch) {
+            return JSON.parse(jsonMatch[0]);
+          }
+          return JSON.parse(cleanedText);
+        } catch (parseError) {
+          this.logger.error(`Failed to parse Groq response: ${text}`);
+          return [];
+        }
+      } catch (groqError) {
+        this.logger.error(`Groq fallback also failed: ${groqError.message}`);
+      }
+    } else {
+      this.logger.warn('Groq fallback not configured (missing GROQ_API_KEY).');
+    }
+
     return [];
   }
 
@@ -177,10 +218,31 @@ ${resumeText.substring(0, 5000)}
       }
     }
 
-    this.logger.error(`All models failed for summary. Last error: ${lastError?.message}`);
+    this.logger.error(`All Gemini models failed for summary. Last error: ${lastError?.message}`);
     if (lastError) {
       this.logger.debug(`Raw error stack: ${lastError.stack}`);
     }
+
+    // GROQ FALLBACK
+    if (this.groq) {
+      this.logger.log('Attempting Groq fallback for resume summarization...');
+      try {
+        const chatCompletion = await this.groq.chat.completions.create({
+          messages: [{ role: 'user', content: prompt }],
+          model: 'llama3-8b-8192',
+          temperature: 0.5,
+        });
+
+        const summary = chatCompletion.choices[0]?.message?.content?.trim() || 'Failed to generate summary.';
+        this.logger.log('Successfully summarized resume using Groq fallback.');
+        return summary;
+      } catch (groqError) {
+        this.logger.error(`Groq fallback also failed: ${groqError.message}`);
+      }
+    } else {
+      this.logger.warn('Groq fallback not configured (missing GROQ_API_KEY).');
+    }
+
     return 'Failed to generate summary.';
   }
 }

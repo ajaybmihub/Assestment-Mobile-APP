@@ -234,13 +234,14 @@ export default async function InterviewDetailPage({
   );
 }
 
-function QuickTile({ label, value, accent, warning }: { label: string; value: any; accent?: boolean; warning?: boolean }) {
+function QuickTile({ label, value, accent, warning, subtitle }: { label: string; value: any; accent?: boolean; warning?: boolean; subtitle?: string }) {
   return (
     <div style={{ padding: '0.875rem 1rem', background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: '14px', boxShadow: 'var(--shadow-card)', display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>
       <div style={{ fontSize: '0.6rem', fontWeight: 700, color: 'var(--text-4)', textTransform: 'uppercase', letterSpacing: '0.08em', display: 'flex', alignItems: 'center', gap: '4px' }}>
         <Info size={10} /> {label}
       </div>
       <div style={{ fontSize: '1.2rem', fontWeight: 800, color: warning ? '#EF4444' : accent ? 'var(--accent)' : 'var(--text-1)', letterSpacing: '-0.02em' }}>{value}</div>
+      {subtitle && <div style={{ fontSize: '0.65rem', color: 'var(--text-4)', marginTop: '0.1rem' }}>{subtitle}</div>}
     </div>
   );
 }
