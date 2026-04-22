@@ -133,7 +133,7 @@ export default async function InterviewsPage() {
                           <div style={{ overflow: 'hidden' }}>
                             <div style={{ fontWeight: 700, color: 'var(--text-1)', fontSize: '0.9rem', marginBottom: '0.2rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{userName}</div>
                             <div style={{ fontSize: '0.65rem', color: 'var(--text-4)', fontFamily: 'monospace', letterSpacing: '0.04em' }}>
-                              ID: <span style={{ color: 'var(--text-3)' }}>{iv._id?.slice(-8)}</span>
+                              ID: <span style={{ color: 'var(--text-3)' }}>{iv._id?.replace('sess_', '')}</span>
                             </div>
                           </div>
                         </div>

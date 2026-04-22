@@ -107,7 +107,7 @@ export default async function InterviewDetailPage({
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.625rem', marginBottom: '0.5rem', flexWrap: 'wrap' }}>
               <span style={{ fontSize: '0.625rem', fontWeight: 800, background: 'var(--accent-subtle)', color: 'var(--accent)', padding: '0.2rem 0.6rem', borderRadius: '4px', letterSpacing: '0.05em', textTransform: 'uppercase' }}>Analysis Complete</span>
-              <span style={{ fontSize: '0.72rem', color: 'var(--text-4)' }}>Ref: {iv._id?.slice(-12)}</span>
+              <span style={{ fontSize: '0.72rem', color: 'var(--text-4)' }}>Ref: {iv._id?.replace('sess_', '')}</span>
             </div>
             <h1 className="page-title" style={{ fontSize: '1.75rem', marginBottom: '0.4rem' }}>{iv.role || 'Interview Session'}</h1>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem', fontSize: '0.82rem', color: 'var(--text-3)' }}>

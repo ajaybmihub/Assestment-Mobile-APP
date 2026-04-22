@@ -105,7 +105,7 @@ export default async function UsersPage() {
                         <div style={{ overflow: 'hidden' }}>
                           <div style={{ fontWeight: 700, color: 'var(--text-1)', fontSize: '0.9rem', marginBottom: '0.2rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{user.name ?? 'Anonymous User'}</div>
                           <div style={{ fontSize: '0.65rem', color: 'var(--text-4)', fontFamily: 'monospace', letterSpacing: '0.04em' }}>
-                            ID: <span style={{ color: 'var(--text-3)' }}>{user._id?.slice(-12)}</span>
+                            ID: <span style={{ color: 'var(--text-3)' }}>{user._id?.replace('user_', '')}</span>
                           </div>
                         </div>
                       </div>
