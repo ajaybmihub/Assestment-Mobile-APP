@@ -1,0 +1,96 @@
+{
+	"info": {
+		"_postman_id": "b3f3b1f3-1f3b-4f3b-8f3b-3f3b1f3b1f3b",
+		"name": "Interview AI Backend API",
+		"description": "Collection for testing the Interview AI Backend Sync and Question Generation endpoints.",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Sync User Profile",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"_id\": \"user_test_device_123\",\n  \"name\": \"John Doe\",\n  \"email\": \"john.doe@example.com\",\n  \"device_name\": \"Postman Hub\",\n  \"resume_text\": \"Highly skilled Software Engineer with 5 years of experience in Flutter and NestJS. Expert in building AI-driven mobile applications and scalable backend services.\",\n  \"preferences\": {\n    \"target_role\": \"Senior Mobile Engineer\",\n    \"preferred_job\": \"Full Stack Developer\",\n    \"experience_level\": \"Professional\"\n  }\n}"
+				},
+				"url": {
+					"raw": "http://localhost:5000/sync/user",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "5000",
+					"path": [
+						"sync",
+						"user"
+					]
+				},
+				"description": "Syncs user profile and triggers resume summarization."
+			},
+			"response": []
+		},
+		{
+			"name": "Trigger Question Generation",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"deviceId\": \"test_device_123\"\n}"
+				},
+				"url": {
+					"raw": "http://localhost:5000/sync/generate-questions",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "5000",
+					"path": [
+						"sync",
+						"generate-questions"
+					]
+				},
+				"description": "Triggers the AI to generate personalized questions for the specified device."
+			},
+			"response": []
+		},
+		{
+			"name": "Health Check",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:5000/monitor/health",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "5000",
+					"path": [
+						"monitor",
+						"health"
+					]
+				}
+			},
+			"response": []
+		}
+	],
+	"variable": [
+		{
+			"key": "base_url",
+			"value": "http://localhost:5000"
+		}
+	]
+}

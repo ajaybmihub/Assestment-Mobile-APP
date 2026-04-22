@@ -27,15 +27,17 @@ export class AiService {
       return [];
     }
 
-    const modelsToTry = ['gemini-3-flash-preview', 'gemini-1.5-flash', 'gemini-1.5-pro', 'gemini-pro'];
-    let lastError: Error | null = null;
+    const modelsToTry = [
+      'gemini-3-flash-preview',
+      'gemini-3.1-flash-lite-preview',
+      'gemini-3-pro-preview',
+      'gemini-3.1-pro-preview',
+      'gemini-2.5-flash',
+      'gemini-2.0-flash',
+      'gemini-2.5-pro',
+    ];
 
-    for (const modelName of modelsToTry) {
-      try {
-        const model = this.genAI.getGenerativeModel({ model: modelName });
-        this.logger.log(`Attempting expert question generation with model: ${modelName}`);
-
-        const prompt = `
+    const prompt = `
 You are a Lead Technical Interviewer with 10+ years of experience at a Tier-1 Tech Giant (Scale/FAANG). 
 
 Your goal is NOT just to generate questions, but to be an ADAPTIVE AGENT that performs a high-stakes clinical evaluation of a candidate's actual engineering depth. 
@@ -98,11 +100,17 @@ Return ONLY a JSON array of EXACTLY 10 questions:
 ["Question 1", "Question 2", ..., "Question 10"]
 `;
 
+    let lastError: Error | null = null;
+    for (const modelName of modelsToTry) {
+      try {
+        const model = this.genAI.getGenerativeModel({ model: modelName });
+        this.logger.log(`Attempting expert question generation with model: ${modelName}`);
+
         const result = await model.generateContent(prompt);
         const response = await result.response;
         const text = response.text();
         this.logger.log(`Successfully generated questions using ${modelName}`);
-        
+
         // Robust JSON extraction
         try {
           const cleanedText = text.replace(/```json/g, '').replace(/```/g, '').trim();
@@ -116,13 +124,63 @@ Return ONLY a JSON array of EXACTLY 10 questions:
           return [];
         }
       } catch (error) {
-        this.logger.warn(`Model ${modelName} failed: ${error.message}`);
+        this.logger.warn(`Model ${modelName} failed for questions: ${error.message}`);
         lastError = error;
-        continue; // Try next model
+        continue;
       }
     }
 
-    this.logger.error(`All models failed. Last error: ${lastError?.message}`);
+    this.logger.error(`All models failed for questions. Last error: ${lastError?.message}`);
     return [];
+  }
+
+  async summarizeResume(resumeText: string): Promise<string> {
+    if (!this.genAI) return 'AI Summary currently unavailable.';
+
+    const modelsToTry = [
+      'gemini-3-flash-preview',
+      'gemini-3.1-flash-lite-preview',
+      'gemini-3-pro-preview',
+      'gemini-3.1-pro-preview',
+      'gemini-2.5-flash',
+      'gemini-2.0-flash',
+      'gemini-2.5-pro',
+    ];
+
+    const prompt = `
+Summarize this candidate's professional profile into a single, punchy paragraph (max 100 words).
+Focus on:
+1. Years of experience and current seniority.
+2. Core technical stack (languages, frameworks).
+3. Most impressive project or achievement.
+4. Primary engineering "superpower" (e.g., performance optimization, UI/UX depth, or backend scalability).
+
+Resume Text:
+${resumeText.substring(0, 5000)}
+`;
+
+    let lastError: Error | null = null;
+    for (const modelName of modelsToTry) {
+      try {
+        const model = this.genAI.getGenerativeModel({ model: modelName });
+        this.logger.log(`Attempting resume summarization with model: ${modelName}`);
+
+        const result = await model.generateContent(prompt);
+        const response = await result.response;
+        const summary = response.text().trim();
+        this.logger.log(`Successfully summarized resume using ${modelName}`);
+        return summary;
+      } catch (error) {
+        this.logger.warn(`Model ${modelName} failed for summary: ${error.message}`);
+        lastError = error;
+        continue;
+      }
+    }
+
+    this.logger.error(`All models failed for summary. Last error: ${lastError?.message}`);
+    if (lastError) {
+      this.logger.debug(`Raw error stack: ${lastError.stack}`);
+    }
+    return 'Failed to generate summary.';
   }
 }

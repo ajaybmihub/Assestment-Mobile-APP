@@ -3,6 +3,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { User } from './user.schema';
 import { AiService } from '../ai/ai.service';
+import { QuestionsService } from '../questions/questions.service';
 
 @Injectable()
 export class UsersService {
@@ -11,6 +12,7 @@ export class UsersService {
   constructor(
     @InjectModel(User.name) private userModel: Model<User>,
     private aiService: AiService,
+    private questionsService: QuestionsService,
   ) {}
 
   async generateAndStoreQuestions(deviceId: string): Promise<string[]> {
@@ -23,27 +25,35 @@ export class UsersService {
       return [];
     }
 
-    const { resume_text, name, preferences } = user;
-    this.logger.log(`Found user: ${name}, Resume length: ${resume_text?.length || 0}`);
+    const { resume_summary, name, preferences } = user;
+    this.logger.log(`Found user: ${name}, Has Summary: ${!!resume_summary}`);
     const { target_role, preferred_job, experience_level } = preferences || {};
 
-    if (!resume_text) {
-      this.logger.warn(`No resume text found for user: ${userId}`);
+    if (!resume_summary) {
+      this.logger.warn(`No resume summary found for user: ${userId}. Skipping question generation.`);
       return [];
     }
 
     const questions = await this.aiService.generatePersonalizedQuestions(
-      resume_text,
+      resume_summary, 
       target_role || 'General',
       preferred_job || 'General',
-      experience_level || 'Fresher',
+      experience_level || 'Professional',
     );
 
     if (questions.length > 0) {
-      await this.userModel.updateOne(
-        { _id: userId },
-        { $set: { personalized_questions: questions } },
-      ).exec();
+      this.logger.log(`AI: Successfully generated ${questions.length} questions. Saving to PersonalizedQuestion collection...`);
+      // Store in dedicated PersonalizedQuestion collection
+      // For now, using 0 as jobId if not explicitly a number
+      await this.questionsService.savePersonalizedQuestions(
+        userId,
+        0, 
+        questions,
+        experience_level || 'Intermediate'
+      );
+      this.logger.log(`AI: Personalized questions successfully stored for user ${userId}.`);
+    } else {
+      this.logger.warn(`AI: No questions were generated for user ${userId}.`);
     }
 
     return questions;
@@ -54,16 +64,52 @@ export class UsersService {
     const { _id, ...rest } = data;
     const update = { 
       ...rest,
-      last_active_at: new Date(), // Always update last active
+      updated_at: new Date(),
     };
     
+    this.logger.log(`AI DEBUG: Incoming keys for ${_id}: ${Object.keys(data).join(', ')}`);
+    
     try {
-      const result = await this.userModel.updateOne(
+      const existingUser = await this.userModel.findById(_id).exec();
+      this.logger.log(`AI DEBUG: Existing user found? ${!!existingUser}. Has summary? ${!!existingUser?.resume_summary}`);
+      
+      const hasResume = !!rest.resume_text;
+
+      if (hasResume) {
+        this.logger.log(`AI: Forcing Gemini summarization for ${_id} as requested...`);
+        const summary = await this.aiService.summarizeResume(rest.resume_text);
+        update['resume_summary'] = summary;
+        this.logger.log(`AI: Successfully generated and forced summary for ${_id}.`);
+      }
+
+      const result = await this.userModel.findOneAndUpdate(
         { _id: _id },
         { $set: update },
-        { upsert: true },
+        { upsert: true, new: true },
       ).exec();
-      this.logger.log(`Upsert result for ${_id}: ${JSON.stringify(result)}`);
+
+      // Trigger question generation only if BOTH resume and job are chosen AND it's a new choice
+      // Trigger question generation only if BOTH summary and job are available
+      const currentSummary = update['resume_summary'] || existingUser?.resume_summary;
+      const currentJob = rest.preferred_job || existingUser?.preferences?.preferred_job;
+
+      if (currentSummary && currentJob) {
+        const hasJobChanged = existingUser?.preferences?.preferred_job !== rest.preferred_job || 
+                              existingUser?.preferences?.target_role !== rest.target_role;
+        
+        const hasSummaryJustGenerated = !!update['resume_summary'];
+
+        if (hasJobChanged || hasSummaryJustGenerated) {
+          this.logger.log(`AI: Summary and Job ready. Triggering question generation for ${_id}...`);
+          const deviceId = _id.replace('user_', '');
+          
+          this.generateAndStoreQuestions(deviceId).catch(e => {
+            this.logger.error(`AI Auto-Question failed for ${deviceId}: ${e.message}`);
+          });
+        }
+      }
+
+      this.logger.log(`Upsert finished for ${_id}`);
       return result;
     } catch (error) {
       this.logger.error(`Failed to upsert user ${_id}: ${error.message}`);

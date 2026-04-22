@@ -23,6 +23,7 @@ export class User {
   };
 
   @Prop() resume_text: string;
+  @Prop() resume_summary: string;
   @Prop({ type: [String] })
   personalized_questions: string[];
 

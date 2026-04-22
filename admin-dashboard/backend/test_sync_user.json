@@ -1,0 +1,12 @@
+{
+  "_id": "user_test_device_123",
+  "name": "John Doe",
+  "email": "john.doe@example.com",
+  "device_name": "Test Device 001",
+  "resume_text": "Highly skilled Software Engineer with 5 years of experience in Flutter and NestJS. Expert in building AI-driven mobile applications and scalable backend services.",
+  "preferences": {
+    "target_role": "Senior Mobile Engineer",
+    "preferred_job": "Full Stack Developer",
+    "experience_level": "Professional"
+  }
+}

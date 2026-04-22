@@ -10,6 +10,7 @@ import { MediaModule } from './modules/media/media.module';
 import { TicketsModule } from './modules/tickets/tickets.module';
 import { MonitorModule } from './modules/monitor/monitor.module';
 import { AiModule } from './modules/ai/ai.module';
+import { QuestionsModule } from './modules/questions/questions.module';
 
 @Module({
   imports: [
@@ -28,6 +29,7 @@ import { AiModule } from './modules/ai/ai.module';
     TicketsModule,
     MonitorModule,
     AiModule,
+    QuestionsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
