@@ -10,7 +10,11 @@ async function getUser(id: string) {
     const user = uRes.ok ? JSON.parse(await uRes.text()) : null;
     const ivData = iRes.ok ? await iRes.json() : { interviews: [] };
     const allInterviews: any[] = ivData.interviews ?? [];
-    const userSessions = allInterviews.filter((iv: any) => iv.user_id === id);
+    
+    // Use the actual ID from the user object (if found) or decode the URL param
+    const actualUserId = user?._id || decodeURIComponent(id);
+    const userSessions = allInterviews.filter((iv: any) => iv.user_id === actualUserId);
+    
     return { user, userSessions };
   } catch {
     return { user: null, userSessions: [] };
