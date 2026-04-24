@@ -1,4 +1,4 @@
-import { Controller, Post, Body, Logger } from '@nestjs/common';
+import { Controller, Post, Get, Body, Query, Logger } from '@nestjs/common';
 import { SyncService } from './sync.service';
 
 @Controller('sync')
@@ -6,6 +6,15 @@ export class SyncController {
   private readonly logger = new Logger(SyncController.name);
 
   constructor(private readonly syncService: SyncService) {}
+
+  @Get('check-identity')
+  async checkIdentity(
+    @Query('email') email: string,
+    @Query('mobile') mobile: string,
+  ) {
+    this.logger.log(`Checking identity availability for: Email=${email}, Mobile=${mobile}`);
+    return this.syncService.checkIdentity(email, mobile);
+  }
 
   @Post('interview')
   async syncInterview(@Body() payload: any) {

@@ -51,4 +51,9 @@ export class SyncService {
     const questions = await this.usersService.generateAndStoreQuestions(deviceId);
     return { success: true, questions };
   }
+
+  async checkIdentity(email: string, mobile: string) {
+    const exists = await this.usersService.checkIdentity(email, mobile);
+    return { exists };
+  }
 }

@@ -136,4 +136,15 @@ export class UsersService {
   async countAll(): Promise<number> {
     return this.userModel.countDocuments().exec();
   }
+
+  async checkIdentity(email: string, mobile: string): Promise<boolean> {
+    this.logger.log(`Checking identity availability for: Email=${email}, Mobile=${mobile}`);
+    const count = await this.userModel.countDocuments({
+      $or: [
+        { email: email },
+        { mobile_number: mobile },
+      ],
+    }).exec();
+    return count > 0;
+  }
 }
