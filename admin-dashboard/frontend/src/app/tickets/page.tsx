@@ -14,10 +14,11 @@ export default function TicketsPage() {
 
   useEffect(() => {
     async function load() {
+      const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
       try {
         const [tRes, uRes] = await Promise.all([
-          fetch(`${process.env.NEXT_PUBLIC_API_URL}/tickets`, { cache: 'no-store' }),
-          fetch(`${process.env.NEXT_PUBLIC_API_URL}/users`, { cache: 'no-store' }),
+          fetch(`${API_URL}/tickets`, { cache: 'no-store' }),
+          fetch(`${API_URL}/users`, { cache: 'no-store' }),
         ]);
         const ticketsData = await tRes.json();
         const usersData = await uRes.json();

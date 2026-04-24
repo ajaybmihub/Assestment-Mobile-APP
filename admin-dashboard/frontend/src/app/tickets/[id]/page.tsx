@@ -15,14 +15,15 @@ export default function TicketDetailPage() {
 
   useEffect(() => {
     async function load() {
+      const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
       try {
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/tickets/${id}`, { cache: 'no-store' });
+        const res = await fetch(`${API_URL}/tickets/${id}`, { cache: 'no-store' });
         if (!res.ok) {
           setLoading(false);
           return;
         }
         const data = await res.json();
-        const uRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/users/${data.user_id}`, { cache: 'no-store' });
+        const uRes = await fetch(`${API_URL}/users/${data.user_id}`, { cache: 'no-store' });
         const user = uRes.ok ? await uRes.json() : null;
         setTicket({ ...data, userName: user?.name || 'Registered User' });
       } catch (e) {
@@ -35,6 +36,7 @@ export default function TicketDetailPage() {
   }, [id]);
 
   const updateStatus = async (status: string) => {
+    const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
     if (!notes.trim() && status === 'resolved') {
       alert('Please provide resolution notes before marking as resolved.');
       return;
@@ -42,7 +44,7 @@ export default function TicketDetailPage() {
     
     setIsUpdating(true);
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/tickets/${id}/status`, {
+      const res = await fetch(`${API_URL}/tickets/${id}/status`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status, notes }),

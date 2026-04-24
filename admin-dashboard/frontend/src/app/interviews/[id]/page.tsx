@@ -3,11 +3,12 @@ import Link from 'next/link';
 import { Search, Video, VideoOff, ShieldCheck, MessageCircle, User, ArrowLeft, ChevronDown, Info } from 'lucide-react';
 
 async function getInterviewWithUser(id: string) {
+  const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
   try {
-    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/interviews/${id}`, { cache: 'no-store' });
+    const res = await fetch(`${API_URL}/interviews/${id}`, { cache: 'no-store' });
     if (!res.ok) return null;
     const iv = await res.json();
-    const uRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/users/${iv.user_id}`, { cache: 'no-store' });
+    const uRes = await fetch(`${API_URL}/users/${iv.user_id}`, { cache: 'no-store' });
     const user = uRes.ok ? await uRes.json() : null;
     return { ...iv, userName: user?.name || 'Anonymous' };
   } catch { return null; }

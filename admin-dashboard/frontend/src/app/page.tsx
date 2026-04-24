@@ -5,11 +5,12 @@ import Link from 'next/link';
 import { Users, PlayCircle, Activity, Mail, ClipboardList, User, ArrowRight, ShieldAlert, MessageCircle, Clock, RefreshCw, Ticket, AlertCircle } from 'lucide-react';
 
 async function fetchDashboardData() {
+  const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
   try {
     const [uRes, iRes, tRes] = await Promise.all([
-      fetch(`${process.env.NEXT_PUBLIC_API_URL}/users`, { cache: 'no-store' }),
-      fetch(`${process.env.NEXT_PUBLIC_API_URL}/interviews`, { cache: 'no-store' }),
-      fetch(`${process.env.NEXT_PUBLIC_API_URL}/tickets`, { cache: 'no-store' }),
+      fetch(`${API_URL}/users`, { cache: 'no-store' }),
+      fetch(`${API_URL}/interviews`, { cache: 'no-store' }),
+      fetch(`${API_URL}/tickets`, { cache: 'no-store' }),
     ]);
     const users = await uRes.json();
     const interviews = await iRes.json();

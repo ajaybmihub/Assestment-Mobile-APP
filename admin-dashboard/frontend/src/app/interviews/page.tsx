@@ -3,10 +3,11 @@ import Link from 'next/link';
 import { ClipboardList, ArrowRight, FileText, User } from 'lucide-react';
 
 async function getData() {
+  const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
   try {
     const [uRes, iRes] = await Promise.all([
-      fetch(`${process.env.NEXT_PUBLIC_API_URL}/users`, { cache: 'no-store' }),
-      fetch(`${process.env.NEXT_PUBLIC_API_URL}/interviews`, { cache: 'no-store' }),
+      fetch(`${API_URL}/users`, { cache: 'no-store' }),
+      fetch(`${API_URL}/interviews`, { cache: 'no-store' }),
     ]);
     const users = await uRes.json();
     const interviews = await iRes.json();
