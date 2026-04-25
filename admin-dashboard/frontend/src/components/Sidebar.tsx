@@ -42,36 +42,7 @@ export default function Sidebar() {
 
         {/* Footer card — mirrors the reference image upgrade/info block */}
         <div className="sidebar-footer">
-          <div style={{ background: 'rgba(255,255,255,0.03)', borderRadius: '14px', padding: '1rem', border: '1px solid rgba(255,255,255,0.06)' }}>
-            <div className="status-indicator">
-              <div className="status-dot" />
-              <span className="status-text">System Online</span>
-            </div>
-            <p style={{ fontSize: '0.65rem', color: 'rgba(255,255,255,0.4)', lineHeight: 1.4, marginTop: '0.5rem' }}>
-              Enterprise grade monitoring active for all regions.
-            </p>
-            <div style={{ marginTop: '1rem' }}>
-              <a
-                href="#"
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '8px',
-                  padding: '0.6rem',
-                  borderRadius: '10px',
-                  background: 'linear-gradient(135deg, #7C3AED, #EC4899)',
-                  color: 'white',
-                  fontSize: '0.78rem',
-                  fontWeight: 700,
-                  textDecoration: 'none',
-                  boxShadow: '0 4px 15px rgba(124,58,237,0.3)',
-                }}
-              >
-                <Zap size={14} fill="currentColor" /> Upgrade Plan
-              </a>
-            </div>
-          </div>
+          
           
           <div style={{ marginTop: '1.25rem', paddingTop: '1.25rem', borderTop: '1px solid rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
             <div className="avatar" style={{ width: '32px', height: '32px', background: 'rgba(255,255,255,0.1)', color: 'white', fontSize: '0.8rem', fontWeight: 700 }}>A</div>

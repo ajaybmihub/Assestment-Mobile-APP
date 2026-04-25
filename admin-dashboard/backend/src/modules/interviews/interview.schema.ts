@@ -18,6 +18,7 @@ export class Interview {
   @Prop() device_id: string;
   @Prop() device_name: string;
   @Prop() role: string;
+  @Prop() job_description?: string;
 
   @Prop({ type: Object })
   scores: {
@@ -27,12 +28,20 @@ export class Interview {
     answer_relevance?: number;
     depth_completeness?: number;
     focus_score?: number;
+    keyword_coverage?: number;
   };
 
   @Prop({ type: [Object] })
   chat_history: ChatMessage[];
 
   @Prop() video_url: string;
+  @Prop() recommendation: string;
+  
+  @Prop({ type: String, default: "" })
+  feedback: string;
+  
+  @Prop({ type: String, default: "[]" })
+  detailed_feedback: string; // JSON string
 
   @Prop({ type: Object })
   proctoring: {

@@ -175,6 +175,9 @@ export default async function UserDetailPage({ params }: { params: Promise<{ id:
                 { label: 'Primary Email', value: user.email },
                 { label: 'User Record ID', value: user._id, mono: true },
                 { label: 'Linked Device', value: user.device_name || user.device_id, mono: true },
+                { label: 'Processor', value: user.processor },
+                { label: 'Total RAM', value: user.total_ram },
+                { label: 'CPU Cores', value: user.cpu_cores },
                 { label: 'First Synced', value: user.createdAt ? new Date(user.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' }) : '—' },
               ].map(r => (
                 <div key={r.label}>

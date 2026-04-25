@@ -60,33 +60,57 @@ export class UsersService {
   }
 
   async upsertUser(data: any): Promise<any> {
-    this.logger.log(`Upserting user profile: ${data._id}`);
-    const { _id, ...rest } = data;
+    const { _id, email, mobile_number, ...rest } = data;
+    this.logger.log(`Upserting user profile: ${_id} (Email: ${email}, Mobile: ${mobile_number})`);
+    
+    // Find if user exists with same email OR mobile number
+    let existingUser: User | null = null;
+    if (email || mobile_number) {
+      const query: any[] = [];
+      if (email) query.push({ email: email });
+      if (mobile_number) query.push({ mobile_number: mobile_number });
+      
+      existingUser = await this.userModel.findOne({ $or: query }).exec();
+    }
+
+    // If not found by email/mobile, try finding by the provided _id
+    if (!existingUser) {
+      existingUser = await this.userModel.findById(_id).exec();
+    }
+
+    // Use the existing user's ID if found, otherwise use the provided _id
+    const targetId = existingUser ? existingUser._id : _id;
+    
+    if (existingUser && existingUser._id !== _id) {
+      this.logger.log(`Merging profile for ${_id} into existing user ${existingUser._id} due to email/mobile match`);
+    }
+
     const update = { 
       ...rest,
+      email,
+      mobile_number,
       updated_at: new Date(),
     };
     
-    this.logger.log(`AI DEBUG: Incoming keys for ${_id}: ${Object.keys(data).join(', ')}`);
+    this.logger.log(`AI DEBUG: Incoming keys for ${targetId}: ${Object.keys(data).join(', ')}`);
     
     try {
-      const existingUser = await this.userModel.findById(_id).exec();
       this.logger.log(`AI DEBUG: Existing user found? ${!!existingUser}. Has summary? ${!!existingUser?.resume_summary}`);
       
       // --- AI LOGIC: Auto-generate summary if resume text is provided but summary is missing ---
       if (update['resume_text'] && (!update['resume_summary'] || update['resume_text'] !== existingUser?.resume_text)) {
-        this.logger.log(`AI: New resume text detected for ${_id}. Generating fresh summary...`);
+        this.logger.log(`AI: New resume text detected for ${targetId}. Generating fresh summary...`);
         try {
           const summary = await this.aiService.summarizeResume(update['resume_text']);
           update['resume_summary'] = summary;
-          this.logger.log(`AI: Successfully generated summary for ${_id}`);
+          this.logger.log(`AI: Successfully generated summary for ${targetId}`);
         } catch (e) {
-          this.logger.error(`AI Summary generation failed for ${_id}: ${e.message}`);
+          this.logger.error(`AI Summary generation failed for ${targetId}: ${e.message}`);
         }
       }
 
       const result = await this.userModel.findOneAndUpdate(
-        { _id: _id },
+        { _id: targetId },
         { $set: update },
         { upsert: true, new: true },
       ).exec();
@@ -103,8 +127,8 @@ export class UsersService {
         const hasSummaryJustGenerated = !!update['resume_summary'];
 
         if (hasJobChanged || hasSummaryJustGenerated) {
-          this.logger.log(`AI: Summary and Job ready. Triggering question generation for ${_id}...`);
-          const deviceId = _id.replace('user_', '');
+          this.logger.log(`AI: Summary and Job ready. Triggering question generation for ${targetId}...`);
+          const deviceId = targetId.replace('user_', '');
           
           this.generateAndStoreQuestions(deviceId).catch(e => {
             this.logger.error(`AI Auto-Question failed for ${deviceId}: ${e.message}`);
@@ -112,7 +136,7 @@ export class UsersService {
         }
       }
 
-      this.logger.log(`Upsert finished for ${_id}`);
+      this.logger.log(`Upsert finished for ${targetId}`);
       return result;
     } catch (error) {
       this.logger.error(`Failed to upsert user ${_id}: ${error.message}`);

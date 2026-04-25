@@ -25,6 +25,11 @@ export class SyncService {
       delete payload.proctoring_flags; 
     }
 
+    // Ensure feedback fields are explicitly preserved in the payload
+    if (payload.feedback === undefined) payload.feedback = "";
+    if (payload.detailed_feedback === undefined) payload.detailed_feedback = "[]";
+
+    this.logger.log(`Upserting session ${payload._id} with feedback length: ${payload.feedback?.length || 0}`);
     return this.interviewsService.upsertInterview(payload);
   }
 

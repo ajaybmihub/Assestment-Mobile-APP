@@ -12,6 +12,9 @@ export class User {
   @Prop() device_id: string;
   @Prop() device_name: string; // Human readable name like 'Pixel 7 Pro'
   @Prop() app_version: string;
+  @Prop() total_ram: string;
+  @Prop() processor: string;
+  @Prop() cpu_cores: number;
   
   @Prop({ type: Object })
   preferences: {
