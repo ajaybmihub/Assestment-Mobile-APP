@@ -3,12 +3,13 @@
 import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, PlayCircle, Users, Mail, Wallet, Shield, Zap } from 'lucide-react';
+import { LayoutDashboard, PlayCircle, Users, Mail, BookOpen } from 'lucide-react';
 
 const NAV = [
   { label: 'Overview',        icon: <LayoutDashboard size={18} />, href: '/'           },
   { label: 'Assessments',     icon: <PlayCircle size={18} />,     href: '/interviews' },
   { label: 'Users',           icon: <Users size={18} />,          href: '/users'      },
+  { label: 'Question Bank',   icon: <BookOpen size={18} />,       href: '/questions'  },
   { label: 'Support',         icon: <Mail size={18} />,           href: '/tickets'    },
 ];
 

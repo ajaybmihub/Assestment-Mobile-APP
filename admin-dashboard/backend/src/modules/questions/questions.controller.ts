@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Query, Logger } from '@nestjs/common';
+import { Controller, Get, Post, Body, Query, Param, Logger } from '@nestjs/common';
 import { QuestionsService } from './questions.service';
 
 @Controller('questions')
@@ -31,5 +31,38 @@ export class QuestionsController {
     this.logger.log(`Marking questions attempted for user: ${payload.userId}`);
     await this.questionsService.markQuestionsAsAttempted(payload.userId, payload.questionIds);
     return { success: true };
+  }
+
+  // --- Admin MCQ Management ---
+
+  @Post('mcq')
+  async createMcq(@Body() data: any) {
+    return this.questionsService.createMcq(data);
+  }
+
+  @Get('mcq')
+  async getMcqs(@Query('topic') topic?: string) {
+    const questions = await this.questionsService.getAllMcqs(topic);
+    return {
+      success: true,
+      count: questions.length,
+      questions
+    };
+  }
+
+  @Post('mcq/:id')
+  async updateMcq(@Param('id') id: string, @Body() data: any) {
+    return this.questionsService.updateMcq(id, data);
+  }
+
+  @Get('sync/mcq')
+  async syncMcqs(@Query('lastSync') lastSync?: string) {
+    const date = lastSync ? new Date(lastSync) : undefined;
+    const questions = await this.questionsService.getMcqSyncData(date);
+    return {
+        success: true,
+        count: questions.length,
+        questions
+    };
   }
 }

@@ -2,6 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { GeneralQuestion, PersonalizedQuestion } from './question.schema';
+import { McqQuestion } from './mcq-question.schema';
 
 @Injectable()
 export class QuestionsService {
@@ -10,7 +11,36 @@ export class QuestionsService {
   constructor(
     @InjectModel(GeneralQuestion.name) private generalModel: Model<GeneralQuestion>,
     @InjectModel(PersonalizedQuestion.name) private personalizedModel: Model<PersonalizedQuestion>,
+    @InjectModel(McqQuestion.name) private mcqModel: Model<McqQuestion>,
   ) {}
+
+  // --- MCQ Management ---
+
+  async createMcq(data: Partial<McqQuestion>) {
+    this.logger.log(`Creating new MCQ question in ${data.topic}`);
+    const newQ = new this.mcqModel(data);
+    return newQ.save();
+  }
+
+  async updateMcq(id: string, data: Partial<McqQuestion>) {
+    this.logger.log(`Updating MCQ question: ${id}`);
+    return this.mcqModel.findByIdAndUpdate(id, { $set: data }, { new: true }).exec();
+  }
+
+  async deleteMcq(id: string) {
+    this.logger.log(`Deleting MCQ question: ${id}`);
+    return this.mcqModel.findByIdAndDelete(id).exec();
+  }
+
+  async getAllMcqs(topic?: string, limit: number = 100) {
+    const query = topic ? { topic } : {};
+    return this.mcqModel.find(query).sort({ updatedAt: -1 }).limit(limit).exec();
+  }
+
+  async getMcqSyncData(lastSyncDate?: Date) {
+    const query = lastSyncDate ? { updatedAt: { $gt: lastSyncDate } } : {};
+    return this.mcqModel.find(query).exec();
+  }
 
   async saveGeneralQuestions(jobId: number, questions: string[], difficulty: string = 'Beginner') {
     this.logger.log(`Saving ${questions.length} general questions for job: ${jobId}`);
