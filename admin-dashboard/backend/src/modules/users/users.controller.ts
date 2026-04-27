@@ -13,11 +13,16 @@ export class UsersController {
 
   @Get()
   async findAll(
-    @Query('page') page: number = 1,
-    @Query('limit') limit: number = 10,
+    @Query('page') page: string,
+    @Query('limit') limit: string,
   ) {
+    const pageNumber = parseInt(page, 10) || 1;
+    const limitNumber = parseInt(limit, 10) || 10;
+    
+    console.log(`[PAGINATION_DEBUG] Page: ${pageNumber}, Limit: ${limitNumber}`);
+
     const [data, total] = await Promise.all([
-      this.usersService.findAll(page, limit),
+      this.usersService.findAll(pageNumber, limitNumber),
       this.usersService.countAll(),
     ]);
 

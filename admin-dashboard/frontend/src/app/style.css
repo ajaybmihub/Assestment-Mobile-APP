@@ -535,6 +535,14 @@ a { text-decoration: none; color: inherit; }
 }
 .btn-outline:hover { background: var(--accent-subtle); border-color: var(--accent); }
 
+.btn-disabled {
+  background: rgba(0,0,0,0.05);
+  color: var(--text-4);
+  cursor: not-allowed;
+  border: 1.5px solid var(--border);
+  opacity: 0.6;
+}
+
 .btn-icon-sq {
   width: 36px; height: 36px; border-radius: 10px;
   background: var(--bg-card);
