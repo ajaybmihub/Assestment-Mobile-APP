@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Query, Param, Logger } from '@nestjs/common';
+import { Controller, Get, Post, Body, Query, Param, Logger, Delete } from '@nestjs/common';
 import { QuestionsService } from './questions.service';
 
 @Controller('questions')
@@ -41,18 +41,41 @@ export class QuestionsController {
   }
 
   @Get('mcq')
-  async getMcqs(@Query('topic') topic?: string) {
-    const questions = await this.questionsService.getAllMcqs(topic);
+  async getMcqs(
+    @Query('page') page: string = '1',
+    @Query('limit') limit: string = '10',
+    @Query('search') search?: string,
+    @Query('topic') topic?: string,
+    @Query('difficulty') difficulty?: string,
+    @Query('domain') domain?: string,
+  ) {
+    const pageNum = parseInt(page, 10) || 1;
+    const limitNum = parseInt(limit, 10) || 10;
+    
+    const result = await this.questionsService.getAllMcqs(
+      { search, topic, difficulty, domain },
+      pageNum,
+      limitNum,
+    );
     return {
       success: true,
-      count: questions.length,
-      questions
+      ...result
     };
+  }
+
+  @Get('metadata')
+  async getMetadata() {
+    return this.questionsService.getUniqueMetadata();
   }
 
   @Post('mcq/:id')
   async updateMcq(@Param('id') id: string, @Body() data: any) {
     return this.questionsService.updateMcq(id, data);
+  }
+
+  @Delete('mcq/:id')
+  async deleteMcq(@Param('id') id: string) {
+    return this.questionsService.deleteMcq(id);
   }
 
   @Get('sync/mcq')

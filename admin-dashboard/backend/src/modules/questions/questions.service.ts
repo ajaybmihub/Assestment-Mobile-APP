@@ -32,9 +32,45 @@ export class QuestionsService {
     return this.mcqModel.findByIdAndDelete(id).exec();
   }
 
-  async getAllMcqs(topic?: string, limit: number = 100) {
-    const query = topic ? { topic } : {};
-    return this.mcqModel.find(query).sort({ updatedAt: -1 }).limit(limit).exec();
+  async getAllMcqs(
+    filters: { search?: string; topic?: string; difficulty?: string; domain?: string },
+    page: number = 1,
+    limit: number = 10,
+  ) {
+    const query: any = {};
+    
+    if (filters.topic) query.topic = filters.topic;
+    if (filters.difficulty) query.difficulty = filters.difficulty;
+    if (filters.domain) query.domain = filters.domain;
+    if (filters.search) {
+      query.$or = [
+        { question: { $regex: filters.search, $options: 'i' } },
+        { topic: { $regex: filters.search, $options: 'i' } },
+        { subtopic: { $regex: filters.search, $options: 'i' } },
+      ];
+    }
+
+    const skip = (page - 1) * limit;
+    const [questions, total, totalBank] = await Promise.all([
+      this.mcqModel.find(query)
+        .sort({ updatedAt: -1 })
+        .skip(skip)
+        .limit(limit)
+        .exec(),
+      this.mcqModel.countDocuments(query).exec(),
+      this.mcqModel.estimatedDocumentCount().exec(),
+    ]);
+
+    this.logger.log(`RAW DB COUNTS - Questions: ${questions.length}, Filtered: ${total}, TotalBank: ${totalBank}`);
+
+    return {
+      questions,
+      total,
+      totalBank,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
+    };
   }
 
   async getMcqSyncData(lastSyncDate?: Date) {
@@ -136,5 +172,38 @@ export class QuestionsService {
         [array[i], array[j]] = [array[j], array[i]];
     }
     return array;
+  }
+
+  async getUniqueMetadata() {
+    const hierarchy = await this.mcqModel.aggregate([
+      {
+        $group: {
+          _id: { domain: "$domain", topic: "$topic" },
+          subtopics: { $addToSet: "$subtopic" }
+        }
+      },
+      {
+        $group: {
+          _id: "$_id.domain",
+          topics: {
+            $push: {
+              topic: "$_id.topic",
+              subtopics: "$subtopics"
+            }
+          }
+        }
+      },
+      {
+        $project: {
+          _id: 0,
+          domain: "$_id",
+          topics: 1
+        }
+      },
+      { $sort: { domain: 1 } }
+    ]);
+
+    this.logger.log(`Metadata hierarchy generated with ${hierarchy.length} domains`);
+    return hierarchy;
   }
 }

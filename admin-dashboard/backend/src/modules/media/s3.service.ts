@@ -31,6 +31,20 @@ export class S3Service {
     return await getSignedUrl(this.s3Client, command, { expiresIn: 900 });
   }
 
+  async uploadFile(file: any): Promise<string> {
+    const bucket = this.configService.get<string>('AWS_S3_BUCKET');
+    const key = `interviews/${Date.now()}-${file.originalname}`;
+
+    await this.s3Client.send(new PutObjectCommand({
+      Bucket: bucket,
+      Key: key,
+      Body: file.buffer,
+      ContentType: file.mimetype,
+    }));
+
+    return `https://${bucket}.s3.${this.configService.get('AWS_REGION')}.amazonaws.com/${key}`;
+  }
+
   // Helper to extract the public URL once uploaded
   getPublicUrl(s3SignedUrl: string): string {
     // S3 signed URLs are structured as https://bucket.s3.region.amazonaws.com/key?parameters
