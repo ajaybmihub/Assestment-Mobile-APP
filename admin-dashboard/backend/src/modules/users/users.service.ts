@@ -2,6 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { User } from './user.schema';
+import { MobileDevice } from './mobile.schema';
 import { AiService } from '../ai/ai.service';
 import { QuestionsService } from '../questions/questions.service';
 
@@ -11,6 +12,7 @@ export class UsersService {
 
   constructor(
     @InjectModel(User.name) private userModel: Model<User>,
+    @InjectModel(MobileDevice.name) private mobileModel: Model<MobileDevice>,
     private aiService: AiService,
     private questionsService: QuestionsService,
   ) {}
@@ -137,6 +139,27 @@ export class UsersService {
       }
 
       this.logger.log(`Upsert finished for ${targetId}`);
+
+      // --- NEW: Sync Mobile Technical Data ---
+      if (rest.device_id) {
+        await this.mobileModel.findOneAndUpdate(
+          { device_id: rest.device_id },
+          {
+            $set: {
+              device_name: rest.device_name,
+              app_version: rest.app_version,
+              cpu_cores: rest.cpu_cores,
+              total_ram: rest.total_ram,
+              processor: rest.processor,
+              user_id: targetId,
+              last_sync_at: rest.last_sync_at || new Date(),
+            }
+          },
+          { upsert: true, new: true }
+        ).exec();
+        this.logger.log(`Mobile technical data synced for device: ${rest.device_id}`);
+      }
+
       return result;
     } catch (error) {
       this.logger.error(`Failed to upsert user ${_id}: ${error.message}`);

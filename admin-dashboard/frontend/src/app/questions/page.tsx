@@ -82,7 +82,7 @@ export default function QuestionsPage() {
   }, [API_URL]);
 
   // Derived metadata based on selections
-  const availableDomains = useMemo(() => hierarchy.map(h => h.domain).sort(), [hierarchy]);
+  const availableDomains = useMemo(() => hierarchy.map((h: any) => h.domain).sort(), [hierarchy]);
   
   const availableTopics = useMemo(() => {
     const d = isModalOpen ? currentQuestion.domain : domain;
@@ -365,7 +365,7 @@ export default function QuestionsPage() {
               style={{ width: 'auto', paddingLeft: '1rem', minWidth: '160px' }}
             >
               <option value="">Filter Classification...</option>
-              {availableTopics.map(t => <option key={t} value={t}>{t}</option>)}
+              {availableTopics.map((t: string) => <option key={t} value={t}>{t}</option>)}
             </select>
 
             {/* Level Filter */}
@@ -392,7 +392,7 @@ export default function QuestionsPage() {
               style={{ width: 'auto', paddingLeft: '1rem', minWidth: '160px' }}
             >
               <option value="">Filter Domain...</option>
-              {availableDomains.map(d => <option key={d} value={d}>{d}</option>)}
+              {availableDomains.map((d: string) => <option key={d} value={d}>{d}</option>)}
             </select>
 
             {(search || difficulty || topic || domain) && (
@@ -437,7 +437,7 @@ export default function QuestionsPage() {
               </tr>
             </thead>
             <tbody>
-              {questions.length > 0 ? questions.map(q => (
+              {questions.length > 0 ? questions.map((q: any) => (
                 <tr key={q._id}>
                   <td>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
@@ -575,7 +575,7 @@ export default function QuestionsPage() {
                     placeholder="Select or type new domain"
                   />
                   <datalist id="domains-list">
-                    {availableDomains.map(d => <option key={d} value={d}>{d}</option>)}
+                    {availableDomains.map((d: string) => <option key={d} value={d}>{d}</option>)}
                   </datalist>
                 </div>
                 <div className="progress-row">
@@ -610,7 +610,7 @@ export default function QuestionsPage() {
                     placeholder="Select or type new topic"
                   />
                   <datalist id="topics-list">
-                    {availableTopics.map(t => <option key={t} value={t}>{t}</option>)}
+                    {availableTopics.map((t: string) => <option key={t} value={t}>{t}</option>)}
                   </datalist>
                 </div>
                 <div className="progress-row">
@@ -625,7 +625,7 @@ export default function QuestionsPage() {
                     placeholder="Select or type new subtopic"
                   />
                   <datalist id="subtopics-list">
-                    {availableSubtopics.map(s => <option key={s} value={s}>{s}</option>)}
+                    {availableSubtopics.map((s: string) => <option key={s} value={s}>{s}</option>)}
                   </datalist>
                 </div>
               </div>
