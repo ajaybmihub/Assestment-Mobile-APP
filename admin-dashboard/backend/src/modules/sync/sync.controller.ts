@@ -1,4 +1,5 @@
-import { Controller, Post, Get, Body, Query, Logger } from '@nestjs/common';
+import { Controller, Post, Get, Body, Query, Logger, UseInterceptors, UploadedFile } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { SyncService } from './sync.service';
 
 @Controller('sync')
@@ -44,5 +45,15 @@ export class SyncController {
   async generateQuestions(@Body() payload: { deviceId: string }) {
     this.logger.log(`Received question generation request for device: ${payload.deviceId}`);
     return this.syncService.triggerQuestionGeneration(payload.deviceId);
+  }
+
+  @Post('resume')
+  @UseInterceptors(FileInterceptor('file'))
+  async syncResume(
+    @UploadedFile() file: Express.Multer.File,
+    @Body('userId') userId: string,
+  ) {
+    this.logger.log(`Received resume upload for user ${userId}: ${file.originalname}`);
+    return this.syncService.extractResumeAndSummarize(file, userId);
   }
 }

@@ -21,8 +21,7 @@ export class User {
 
   @Prop() resume_text: string;
   @Prop() resume_summary: string;
-  @Prop({ type: [String] })
-  personalized_questions: string[];
+  @Prop() device_id: string;
 
   @Prop() last_active_at: Date;
   @Prop() last_sync_at: Date;

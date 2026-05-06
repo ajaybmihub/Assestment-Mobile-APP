@@ -62,9 +62,31 @@ export class UsersService {
   }
 
   async upsertUser(data: any): Promise<any> {
-    const { _id, email, mobile_number, ...rest } = data;
+    const { _id, email, mobile_number, preferences, ...rest } = data;
     this.logger.log(`Upserting user profile: ${_id} (Email: ${email}, Mobile: ${mobile_number})`);
     
+    // Separate hardware/mobile data from user data
+    const hardwareFields = [
+      'device_name', 'app_version', 'cpu_cores', 'total_ram', 'processor', 
+      'last_sync_at', 'device_id'
+    ];
+    
+    const mobileData: any = {};
+    const userData: any = { ...rest };
+    
+    // Move hardware fields to mobileData and remove from userData
+    hardwareFields.forEach(field => {
+      if (field in userData) {
+        mobileData[field] = userData[field];
+        delete userData[field];
+      }
+    });
+
+    // Special case for device_id: it stays in both (mapping in user, primary key in mobile)
+    if (mobileData.device_id) {
+      userData.device_id = mobileData.device_id;
+    }
+
     // Find if user exists with same email OR mobile number
     let existingUser: User | null = null;
     if (email || mobile_number) {
@@ -75,37 +97,34 @@ export class UsersService {
       existingUser = await this.userModel.findOne({ $or: query }).exec();
     }
 
-    // If not found by email/mobile, try finding by the provided _id
     if (!existingUser) {
       existingUser = await this.userModel.findById(_id).exec();
     }
 
-    // Use the existing user's ID if found, otherwise use the provided _id
     const targetId = existingUser ? existingUser._id : _id;
     
-    if (existingUser && existingUser._id !== _id) {
-      this.logger.log(`Merging profile for ${_id} into existing user ${existingUser._id} due to email/mobile match`);
-    }
-
-    const update = { 
-      ...rest,
+    const update: any = { 
+      ...userData,
       email,
       mobile_number,
-      updated_at: new Date(),
+      updatedAt: new Date(),
     };
-    
-    this.logger.log(`AI DEBUG: Incoming keys for ${targetId}: ${Object.keys(data).join(', ')}`);
+
+    // Ensure preferences are correctly merged/updated
+    if (preferences) {
+      update.preferences = {
+        ...(existingUser?.preferences || {}),
+        ...preferences
+      };
+    }
     
     try {
-      this.logger.log(`AI DEBUG: Existing user found? ${!!existingUser}. Has summary? ${!!existingUser?.resume_summary}`);
-      
       // --- AI LOGIC: Auto-generate summary if resume text is provided but summary is missing ---
-      if (update['resume_text'] && (!update['resume_summary'] || update['resume_text'] !== existingUser?.resume_text)) {
+      if (update.resume_text && (!update.resume_summary || update.resume_text !== existingUser?.resume_text)) {
         this.logger.log(`AI: New resume text detected for ${targetId}. Generating fresh summary...`);
         try {
-          const summary = await this.aiService.summarizeResume(update['resume_text']);
-          update['resume_summary'] = summary;
-          this.logger.log(`AI: Successfully generated summary for ${targetId}`);
+          const summary = await this.aiService.summarizeResume(update.resume_text);
+          update.resume_summary = summary;
         } catch (e) {
           this.logger.error(`AI Summary generation failed for ${targetId}: ${e.message}`);
         }
@@ -114,55 +133,47 @@ export class UsersService {
       const result = await this.userModel.findOneAndUpdate(
         { _id: targetId },
         { $set: update },
-        { upsert: true, new: true },
+        { upsert: true, returnDocument: 'after' },
       ).exec();
 
-      // Trigger question generation only if BOTH resume and job are chosen AND it's a new choice
       // Trigger question generation only if BOTH summary and job are available
-      const currentSummary = update['resume_summary'] || existingUser?.resume_summary;
-      const currentJob = rest.preferred_job || existingUser?.preferences?.preferred_job;
+      const currentSummary = update.resume_summary || existingUser?.resume_summary;
+      const currentJob = update.preferences?.preferred_job || existingUser?.preferences?.preferred_job;
 
       if (currentSummary && currentJob) {
-        const hasJobChanged = existingUser?.preferences?.preferred_job !== rest.preferred_job || 
-                              existingUser?.preferences?.target_role !== rest.target_role;
+        const hasJobChanged = existingUser?.preferences?.preferred_job !== update.preferences?.preferred_job || 
+                              existingUser?.preferences?.target_role !== update.preferences?.target_role;
         
-        const hasSummaryJustGenerated = !!update['resume_summary'];
+        const hasSummaryJustGenerated = !!update.resume_summary;
 
         if (hasJobChanged || hasSummaryJustGenerated) {
           this.logger.log(`AI: Summary and Job ready. Triggering question generation for ${targetId}...`);
           const deviceId = targetId.replace('user_', '');
-          
           this.generateAndStoreQuestions(deviceId).catch(e => {
             this.logger.error(`AI Auto-Question failed for ${deviceId}: ${e.message}`);
           });
         }
       }
 
-      this.logger.log(`Upsert finished for ${targetId}`);
-
-      // --- NEW: Sync Mobile Technical Data ---
-      if (rest.device_id) {
+      // --- Sync Mobile Technical Data (Separate Collection) ---
+      if (mobileData.device_id) {
         await this.mobileModel.findOneAndUpdate(
-          { device_id: rest.device_id },
+          { device_id: mobileData.device_id },
           {
             $set: {
-              device_name: rest.device_name,
-              app_version: rest.app_version,
-              cpu_cores: rest.cpu_cores,
-              total_ram: rest.total_ram,
-              processor: rest.processor,
+              ...mobileData,
               user_id: targetId,
-              last_sync_at: rest.last_sync_at || new Date(),
+              last_sync_at: mobileData.last_sync_at || new Date(),
             }
           },
-          { upsert: true, new: true }
+          { upsert: true, returnDocument: 'after' }
         ).exec();
-        this.logger.log(`Mobile technical data synced for device: ${rest.device_id}`);
+        this.logger.log(`Mobile technical data synced for device: ${mobileData.device_id}`);
       }
 
       return result;
     } catch (error) {
-      this.logger.error(`Failed to upsert user ${_id}: ${error.message}`);
+      this.logger.error(`Failed to upsert user ${targetId}: ${error.message}`);
       throw error;
     }
   }
