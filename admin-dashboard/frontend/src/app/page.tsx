@@ -33,13 +33,13 @@ async function fetchDashboardData() {
     const sessionsByUser: Record<string, number> = {};
     for (const iv of allInterviews) {
       const uId = iv.user_id;
-      const cleanId = uId?.replace(/^user_/, '');
-      sessionsByUser[uId] = (sessionsByUser[uId] ?? 0) + 1;
-      if (cleanId && cleanId !== uId) {
-        sessionsByUser[cleanId] = (sessionsByUser[cleanId] ?? 0) + 1;
-      }
+      // Standardize on the "clean" ID for unique counting
+      const cleanId = uId?.replace(/^user_/, '') || uId;
+      if (!cleanId) continue;
+      
+      sessionsByUser[cleanId] = (sessionsByUser[cleanId] ?? 0) + 1;
     }
-
+    
     const activeCount = Object.keys(sessionsByUser).length;
     const uniqueDevices = new Set(allUsers.map((u: any) => u.device_id)).size;
 

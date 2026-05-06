@@ -4,9 +4,10 @@ import { User, Mail, Smartphone, Layers, History, Settings, CheckCircle, ArrowRi
 
 export const dynamic = 'force-dynamic';
 
-async function getData(page: number = 1) {
+async function getData(page: number = 1, filter: string = '') {
   const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:5000';
-  const limit = 10;
+  // If we are filtering for active users, we need to fetch a larger set to find them all
+  const limit = filter === 'active' ? 1000 : 10;
   
   try {
     const uRes = await fetch(`${API_URL}/users?page=${page}&limit=${limit}`, { 
@@ -39,28 +40,21 @@ async function getData(page: number = 1) {
 
     for (const iv of allInterviews) {
       const uId = iv.user_id;
-      const cleanUId = uId?.replace(/^user_/, '');
+      const cleanUId = uId?.replace(/^user_/, '') || uId;
+      if (!cleanUId) continue;
       
-      // We need to find which user this belongs to. 
-      // We'll map to the clean ID for consistency in lookups.
-      sessionsByUser[uId] = (sessionsByUser[uId] ?? 0) + 1;
-      if (cleanUId && cleanUId !== uId) {
-        sessionsByUser[cleanUId] = (sessionsByUser[cleanUId] ?? 0) + 1;
-      }
+      sessionsByUser[cleanUId] = (sessionsByUser[cleanUId] ?? 0) + 1;
 
       const t = iv.start_time || iv.created_at || iv.createdAt;
       if (t) {
-        if (!lastActiveByUser[uId] || t > lastActiveByUser[uId]) lastActiveByUser[uId] = t;
-        if (cleanUId && (!lastActiveByUser[cleanUId] || t > lastActiveByUser[cleanUId])) lastActiveByUser[cleanUId] = t;
+        if (!lastActiveByUser[cleanUId] || t > lastActiveByUser[cleanUId]) {
+          lastActiveByUser[cleanUId] = t;
+        }
       }
       
       if (iv.role) {
-        if (!rolesByUser[uId]) rolesByUser[uId] = new Set();
-        rolesByUser[uId].add(iv.role);
-        if (cleanUId) {
-          if (!rolesByUser[cleanUId]) rolesByUser[cleanUId] = new Set();
-          rolesByUser[cleanUId].add(iv.role);
-        }
+        if (!rolesByUser[cleanUId]) rolesByUser[cleanUId] = new Set();
+        rolesByUser[cleanUId].add(iv.role);
       }
     }
 
@@ -98,11 +92,14 @@ export default async function UsersPage({
   const filter = params.filter;
   const currentPage = parseInt(pageStr || '1', 10);
   
-  let { allUsers, sessionsByUser, lastActiveByUser, rolesByUser, meta } = await getData(currentPage);
+  let { allUsers, sessionsByUser, lastActiveByUser, rolesByUser, meta } = await getData(currentPage, filter || '');
 
   // Apply active filter if requested
   if (filter === 'active') {
-    allUsers = allUsers.filter(user => (sessionsByUser[user._id] ?? 0) > 0);
+    allUsers = allUsers.filter(user => {
+      const cleanId = user._id?.replace(/^user_/, '') || user._id;
+      return (sessionsByUser[cleanId] ?? 0) > 0;
+    });
   }
 
   return (
@@ -144,8 +141,9 @@ export default async function UsersPage({
             </thead>
             <tbody>
               {allUsers.length > 0 ? allUsers.map((user: any, idx: number) => {
-                const sessions = sessionsByUser[user._id] ?? 0;
-                const lastActive = lastActiveByUser[user._id];
+                const cleanId = user._id?.replace(/^user_/, '') || user._id;
+                const sessions = sessionsByUser[cleanId] ?? 0;
+                const lastActive = lastActiveByUser[cleanId];
                 
                 return (
                   <tr key={user._id} style={{ height: '84px', borderBottom: '1px solid var(--border-subtle)' }} className="table-row-hover">
