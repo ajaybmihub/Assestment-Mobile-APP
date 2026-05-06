@@ -1,0 +1,9 @@
+flutter_application_1/
+node_modules/
+.env
+dist/
+build/
+.next/
+.idea/
+.vscode/
+*.log
