@@ -5,7 +5,7 @@ import { User, Mail, Smartphone, Layers, History, Settings, CheckCircle, ArrowRi
 export const dynamic = 'force-dynamic';
 
 async function getData(page: number = 1) {
-  const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+  const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:5000';
   const limit = 10;
   
   try {
@@ -38,14 +38,29 @@ async function getData(page: number = 1) {
     const rolesByUser: Record<string, Set<string>> = {};
 
     for (const iv of allInterviews) {
-      sessionsByUser[iv.user_id] = (sessionsByUser[iv.user_id] ?? 0) + 1;
-      if (iv.role) {
-        if (!rolesByUser[iv.user_id]) rolesByUser[iv.user_id] = new Set();
-        rolesByUser[iv.user_id].add(iv.role);
+      const uId = iv.user_id;
+      const cleanUId = uId?.replace(/^user_/, '');
+      
+      // We need to find which user this belongs to. 
+      // We'll map to the clean ID for consistency in lookups.
+      sessionsByUser[uId] = (sessionsByUser[uId] ?? 0) + 1;
+      if (cleanUId && cleanUId !== uId) {
+        sessionsByUser[cleanUId] = (sessionsByUser[cleanUId] ?? 0) + 1;
       }
+
       const t = iv.start_time || iv.created_at || iv.createdAt;
-      if (t && (!lastActiveByUser[iv.user_id] || t > lastActiveByUser[iv.user_id])) {
-        lastActiveByUser[iv.user_id] = t;
+      if (t) {
+        if (!lastActiveByUser[uId] || t > lastActiveByUser[uId]) lastActiveByUser[uId] = t;
+        if (cleanUId && (!lastActiveByUser[cleanUId] || t > lastActiveByUser[cleanUId])) lastActiveByUser[cleanUId] = t;
+      }
+      
+      if (iv.role) {
+        if (!rolesByUser[uId]) rolesByUser[uId] = new Set();
+        rolesByUser[uId].add(iv.role);
+        if (cleanUId) {
+          if (!rolesByUser[cleanUId]) rolesByUser[cleanUId] = new Set();
+          rolesByUser[cleanUId].add(iv.role);
+        }
       }
     }
 
@@ -76,13 +91,19 @@ function timeAgo(isoStr: any) {
 export default async function UsersPage({
   searchParams,
 }: {
-  searchParams: Promise<{ page?: string }>;
+  searchParams: Promise<{ page?: string; filter?: string }>;
 }) {
   const params = await searchParams;
   const pageStr = params.page;
+  const filter = params.filter;
   const currentPage = parseInt(pageStr || '1', 10);
   
-  const { allUsers, sessionsByUser, lastActiveByUser, rolesByUser, meta } = await getData(currentPage);
+  let { allUsers, sessionsByUser, lastActiveByUser, rolesByUser, meta } = await getData(currentPage);
+
+  // Apply active filter if requested
+  if (filter === 'active') {
+    allUsers = allUsers.filter(user => (sessionsByUser[user._id] ?? 0) > 0);
+  }
 
   return (
     <>
@@ -90,22 +111,32 @@ export default async function UsersPage({
         <div className="page-header-row">
           <div>
             <div className="page-title">Candidate Directory</div>
-            <div className="page-subtitle">Unified view of all registered student profiles and their activity metrics</div>
+            <div className="page-subtitle">
+              {filter === 'active' 
+                ? 'Showing only active candidates with recorded assessment sessions' 
+                : 'Unified view of all registered student profiles and their activity metrics'}
+            </div>
           </div>
           <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
-            <div className="badge badge-purple" style={{ padding: '0.625rem 1rem' }}>{meta.total} Total Profiles</div>
+            {filter === 'active' && (
+              <Link href="/users" className="badge badge-amber" style={{ padding: '0.625rem 1rem', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <span style={{ fontSize: '1.2rem', lineHeight: 0 }}>×</span> Clear Filter: Active
+              </Link>
+            )}
+            <div className="badge badge-purple" style={{ padding: '0.625rem 1rem' }}>
+              {filter === 'active' ? allUsers.length : meta.total} {filter === 'active' ? 'Active' : 'Total'} Profiles
+            </div>
           </div>
         </div>
       </div>
 
       <div className="card" style={{ padding: '0', overflow: 'hidden' }}>
-        <div style={{ overflowX: 'auto' }}>
-          <table className="data-table" style={{ width: '100%', tableLayout: 'fixed', minWidth: '940px', borderCollapse: 'collapse' }}>
+        <div className="table-scroll-container">
+          <table className="data-table" style={{ width: '100%', tableLayout: 'fixed', minWidth: '940px', borderCollapse: 'separate', borderSpacing: 0 }}>
             <thead>
               <tr style={{ borderBottom: '1px solid var(--border)' }}>
-                <th style={{ paddingLeft: '1.5rem', width: '250px' }}><div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><User size={14} /> Profile</div></th>
-                <th style={{ width: '250px' }}><div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><Mail size={14} /> Contact</div></th>
-                <th style={{ width: '200px' }}><div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><Smartphone size={14} /> Device</div></th>
+                <th style={{ paddingLeft: '1.5rem', width: '300px' }}><div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><User size={14} /> Profile</div></th>
+                <th style={{ width: '300px' }}><div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><Mail size={14} /> Contact</div></th>
                 <th style={{ width: '150px' }}><div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><Layers size={14} /> Sessions</div></th>
                 <th style={{ width: '120px' }}><div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><History size={14} /> Last Seen</div></th>
                 <th style={{ paddingRight: '1.5rem', textAlign: 'right', width: '150px' }}>Actions</th>
@@ -129,7 +160,7 @@ export default async function UsersPage({
                           {(user.name?.[0] ?? 'U').toUpperCase()}
                         </div>
                         <div style={{ overflow: 'hidden' }}>
-                          <div style={{ fontWeight: 700, color: 'var(--text-1)', fontSize: '0.9rem', marginBottom: '0.2rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{user.name ?? 'Anonymous User'}</div>
+                          <div style={{ fontWeight: 700, color: 'var(--text-1)', fontSize: '0.9rem', marginBottom: '0.2rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{user.name || 'Anonymous Candidate'}</div>
                           <div style={{ fontSize: '0.65rem', color: 'var(--text-4)', fontFamily: 'monospace', letterSpacing: '0.04em' }}>
                             ID: <span style={{ color: 'var(--text-3)' }}>{user._id?.replace('user_', '')}</span>
                           </div>
@@ -144,15 +175,8 @@ export default async function UsersPage({
                       </div>
                     </td>
                     <td>
-                      <div style={{ fontSize: '0.78rem', fontFamily: 'monospace', color: 'var(--text-2)', fontWeight: 600, marginBottom: '0.2rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{user.device_id || 'GEN-DEV-X'}</div>
-                      <div style={{ fontSize: '0.68rem', color: 'var(--text-4)' }}>v{user.app_version || '1.0.0'}</div>
-                    </td>
-                    <td>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.625rem' }}>
                         <span style={{ fontWeight: 800, color: 'var(--text-1)', fontSize: '1rem' }}>{sessions}</span>
-                        <div style={{ width: '30px', height: '4px', background: 'rgba(255,255,255,0.05)', borderRadius: '100px', overflow: 'hidden' }}>
-                          <div style={{ height: '100%', width: `${Math.min(100, sessions * 20)}%`, background: COLORS[idx % COLORS.length] }} />
-                        </div>
                       </div>
                     </td>
                     <td style={{ whiteSpace: 'nowrap', fontSize: '0.85rem', color: 'var(--text-2)', fontWeight: 500 }}>
@@ -172,34 +196,36 @@ export default async function UsersPage({
                   </tr>
                 );
               }) : (
-                <tr><td colSpan={6} style={{ textAlign: 'center', padding: '6rem', color: 'var(--text-4)' }}>No student profiles synced yet.</td></tr>
+                <tr><td colSpan={5} style={{ textAlign: 'center', padding: '6rem', color: 'var(--text-4)' }}>No student profiles synced yet.</td></tr>
               )}
             </tbody>
           </table>
         </div>
         
         {/* Pagination Controls */}
-        <div style={{ padding: '1.5rem', borderTop: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--card-bg)' }}>
-          <div style={{ fontSize: '0.875rem', color: 'var(--text-3)' }}>
-            Showing <span style={{ color: 'var(--text-1)', fontWeight: 600 }}>{allUsers.length}</span> candidates on page <span style={{ color: 'var(--text-1)', fontWeight: 600 }}>{currentPage}</span> of <span style={{ color: 'var(--text-1)', fontWeight: 600 }}>{meta.last_page}</span>
+        {!(filter === 'active' && allUsers.length <= 10) && (
+          <div style={{ padding: '1.5rem', borderTop: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--card-bg)' }}>
+            <div style={{ fontSize: '0.875rem', color: 'var(--text-3)' }}>
+              Showing <span style={{ color: 'var(--text-1)', fontWeight: 600 }}>{allUsers.length}</span> candidates on page <span style={{ color: 'var(--text-1)', fontWeight: 600 }}>{currentPage}</span> of <span style={{ color: 'var(--text-1)', fontWeight: 600 }}>{meta.last_page}</span>
+            </div>
+            <div style={{ display: 'flex', gap: '0.5rem' }}>
+              <Link 
+                href={`/users?page=${currentPage - 1}${filter ? `&filter=${filter}` : ''}`}
+                className={`btn ${currentPage <= 1 ? 'btn-disabled' : 'btn-outline'}`}
+                style={{ pointerEvents: currentPage <= 1 ? 'none' : 'auto', textDecoration: 'none' }}
+              >
+                Previous
+              </Link>
+              <Link 
+                href={`/users?page=${currentPage + 1}${filter ? `&filter=${filter}` : ''}`}
+                className={`btn ${currentPage >= meta.last_page ? 'btn-disabled' : 'btn-outline'}`}
+                style={{ pointerEvents: currentPage >= meta.last_page ? 'none' : 'auto', textDecoration: 'none' }}
+              >
+                Next
+              </Link>
+            </div>
           </div>
-          <div style={{ display: 'flex', gap: '0.5rem' }}>
-            <Link 
-              href={`/users?page=${currentPage - 1}`}
-              className={`btn ${currentPage <= 1 ? 'btn-disabled' : 'btn-outline'}`}
-              style={{ pointerEvents: currentPage <= 1 ? 'none' : 'auto', textDecoration: 'none' }}
-            >
-              Previous
-            </Link>
-            <Link 
-              href={`/users?page=${currentPage + 1}`}
-              className={`btn ${currentPage >= meta.last_page ? 'btn-disabled' : 'btn-outline'}`}
-              style={{ pointerEvents: currentPage >= meta.last_page ? 'none' : 'auto', textDecoration: 'none' }}
-            >
-              Next
-            </Link>
-          </div>
-        </div>
+        )}
       </div>
     </>
   );

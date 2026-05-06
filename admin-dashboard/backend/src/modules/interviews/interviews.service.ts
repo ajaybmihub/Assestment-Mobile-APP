@@ -16,9 +16,18 @@ export class InterviewsService {
   async upsertInterview(data: any): Promise<any> {
     this.logger.log(`Upserting interview session: ${data._id}`);
     
+    // Enforce consistent user_id format (standardize on 'user_' prefix)
+    if (data.user_id && !data.user_id.startsWith('user_')) {
+      this.logger.log(`[MAPPING] Standardizing user_id for session ${data._id}: ${data.user_id} -> user_${data.user_id}`);
+      data.user_id = `user_${data.user_id}`;
+    }
+
     // Also update parent user's last active
     if (data.user_id) {
-      await this.usersService.upsertUser({ _id: data.user_id });
+      await this.usersService.upsertUser({ 
+        _id: data.user_id,
+        last_active_at: new Date()
+      });
     }
 
     const { _id, ...updateData } = data;

@@ -415,18 +415,17 @@ export default function QuestionsPage() {
         </div>
 
         {/* Table Content - Removed internal scroll wrapper if possible, or made it only horizontal */}
-        <div style={{ position: 'relative', overflow: 'visible' }}>
+        <div className="table-scroll-container">
           {loading && (
             <div style={{ 
               position: 'absolute', inset: 0, background: 'rgba(255,255,255,0.6)', 
-              display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 10,
+              display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 20,
               backdropFilter: 'blur(2px)'
             }}>
               <div className="spinner"></div>
             </div>
           )}
-
-          <table className="data-table" style={{ width: '100%', tableLayout: 'fixed' }}>
+          <table className="data-table" style={{ width: '100%', tableLayout: 'fixed', borderCollapse: 'separate', borderSpacing: 0 }}>
             <thead>
               <tr>
                 <th style={{ width: '45%' }}>Question Details</th>

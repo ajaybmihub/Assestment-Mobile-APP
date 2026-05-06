@@ -14,18 +14,22 @@ export default function TicketsPage() {
 
   useEffect(() => {
     async function load() {
-      const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+      const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:5000';
       try {
         const [tRes, uRes] = await Promise.all([
           fetch(`${API_URL}/tickets`, { cache: 'no-store' }),
-          fetch(`${API_URL}/users`, { cache: 'no-store' }),
+          fetch(`${API_URL}/users?limit=1000`, { cache: 'no-store' }),
         ]);
         const ticketsData = await tRes.json();
         const usersData = await uRes.json();
 
         const userNameMap: Record<string, string> = {};
         (usersData.data ?? []).forEach((u: any) => {
-          userNameMap[u._id] = u.name || 'Registered User';
+          const name = u.name || 'Anonymous Candidate';
+          userNameMap[u._id] = name;
+          // Normalize ID by removing 'user_' prefix for fallback matching
+          const cleanId = u._id.replace(/^user_/, '');
+          userNameMap[cleanId] = name;
         });
 
         setData({
@@ -66,8 +70,8 @@ export default function TicketsPage() {
       </div>
 
       <div className="card" style={{ border: '1px solid var(--border)', background: 'var(--bg-card)', boxShadow: 'var(--shadow-card)' }}>
-        <div style={{ overflowX: 'auto' }}>
-          <table className="data-table">
+        <div className="table-scroll-container">
+          <table className="data-table" style={{ borderCollapse: 'separate', borderSpacing: 0 }}>
             <thead>
               <tr>
                 <th style={{ paddingLeft: '1.5rem', width: '250px' }}><div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><User size={14} /> Profile</div></th>
@@ -79,7 +83,8 @@ export default function TicketsPage() {
             </thead>
             <tbody>
               {tickets.length > 0 ? tickets.map((t: any) => {
-                const name = userNameMap[t.user_id] || userNameMap[`user_${t.user_id}`];
+                const uId = t.user_id;
+                const name = userNameMap[uId] || userNameMap[uId?.replace(/^user_/, '')] || userNameMap[`user_${uId}`] || 'Anonymous Candidate';
                 const priority = getPriorityBadge(t.priority);
                 const initials = (name || 'U').split(' ').map((n: any) => n[0]).join('').slice(0, 2).toUpperCase();
                 
@@ -109,7 +114,7 @@ export default function TicketsPage() {
                           {initials}
                         </div>
                         <div style={{ overflow: 'hidden' }}>
-                          <div style={{ fontWeight: 700, color: 'var(--text-1)', fontSize: '0.9rem', marginBottom: '0.2rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{name || 'Registered User'}</div>
+                          <div style={{ fontWeight: 700, color: 'var(--text-1)', fontSize: '0.9rem', marginBottom: '0.2rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{name}</div>
                           <div style={{ fontSize: '0.65rem', color: 'var(--text-4)', fontFamily: 'monospace', letterSpacing: '0.04em' }}>
                             ID: <span style={{ color: 'var(--text-3)' }}>{t.user_id.slice(-10)}</span>
                           </div>

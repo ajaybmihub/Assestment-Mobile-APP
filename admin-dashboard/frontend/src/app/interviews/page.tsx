@@ -3,24 +3,35 @@ import Link from 'next/link';
 import { ClipboardList, ArrowRight, FileText, User } from 'lucide-react';
 
 async function getData() {
-  const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+  const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:5000';
   try {
-    const [uRes, iRes] = await Promise.all([
-      fetch(`${API_URL}/users`, { cache: 'no-store' }),
-      fetch(`${API_URL}/interviews`, { cache: 'no-store' }),
+    const [uRes, iRes, jRes] = await Promise.all([
+      fetch(`${API_URL}/users?limit=1000`, { cache: 'no-store' }).catch(e => { console.error('Users fetch failed', e); return null; }),
+      fetch(`${API_URL}/interviews`, { cache: 'no-store' }).catch(e => { console.error('Interviews fetch failed', e); return null; }),
+      fetch(`${API_URL}/jobs`, { cache: 'no-store' }).catch(e => { console.error('Jobs fetch failed', e); return null; }),
     ]);
-    const users = await uRes.json();
-    const interviews = await iRes.json();
+
+    const users = uRes && uRes.ok ? await uRes.json() : { data: [] };
+    const interviews = iRes && iRes.ok ? await iRes.json() : { interviews: [] };
+    const jobs = jRes && jRes.ok ? await jRes.json() : [];
 
     const userNameMap: Record<string, string> = {};
     (users.data ?? []).forEach((u: any) => {
-      userNameMap[u._id] = u.name || 'Anonymous';
+      const name = u.name || 'Anonymous Candidate';
+      userNameMap[u._id] = name;
+      userNameMap[u._id.replace(/^user_/, '')] = name;
+    });
+
+    const jobMap: Record<string, string> = {};
+    (jobs ?? []).forEach((j: any) => {
+      if (j.job_id) jobMap[j.job_id.toString()] = j.title;
     });
 
     return {
       interviews: interviews.interviews ?? [],
       total: interviews.total ?? 0,
       userNameMap,
+      jobMap
     };
   } catch {
     return { interviews: [], total: 0, userNameMap: {} };
@@ -57,7 +68,7 @@ function scoreBadgeClass(n: number) {
 }
 
 export default async function InterviewsPage() {
-  const { interviews, total, userNameMap } = await getData();
+  const { interviews, total, userNameMap, jobMap } = await getData();
 
   return (
     <>
@@ -89,21 +100,27 @@ export default async function InterviewsPage() {
       {/* DESKTOP TABLE */}
       <div id="table-view">
         <div className="card" style={{ padding: '0', overflow: 'hidden' }}>
-          <div style={{ overflowX: 'auto' }}>
-            <table className="data-table" style={{ minWidth: '720px' }}>
+          <div className="table-scroll-container">
+            <table className="data-table" style={{ minWidth: '720px', borderCollapse: 'separate', borderSpacing: 0 }}>
               <thead>
                 <tr>
-                  <th style={{ paddingLeft: '1.5rem', width: '250px' }}><div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><User size={14} /> Profile</div></th>
+                  <th style={{ paddingLeft: '1.5rem', width: '300px' }}><div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><User size={14} /> Profile</div></th>
                   <th>Role</th>
                   <th style={{ textAlign: 'center' }}>Score</th>
-                  <th>Device ID</th>
                   <th>Date</th>
                   <th style={{ textAlign: 'right', paddingRight: '1.5rem' }}>Action</th>
                 </tr>
               </thead>
               <tbody>
                 {interviews.length > 0 ? interviews.map((iv: any, idx: number) => {
-                  const userName = userNameMap[iv.user_id] || 'Anonymous';
+                  const uId = iv.user_id;
+                  let userName = userNameMap[uId] || userNameMap[uId?.replace(/^user_/, '')] || userNameMap[`user_${uId}`] || 'Anonymous';
+                  
+                  // If we still have a generic placeholder, try to use the ID or email for better identification
+                  if (userName === 'Anonymous Candidate' || userName === 'Anonymous' || userName === 'Registered User') {
+                    const displayId = uId?.replace(/^user_/, '') || 'Guest';
+                    userName = displayId;
+                  }
                   const initial = (userName[0] || 'S').toUpperCase();
                   const rawTs = iv.start_time || iv.created_at || iv.createdAt;
                   const ts = typeof rawTs === 'object' && rawTs.$date ? rawTs.$date : rawTs;
@@ -146,14 +163,11 @@ export default async function InterviewsPage() {
                           color: iv.role?.startsWith('MCQ:') ? '#60A5FA' : 'var(--accent-light)', 
                           borderColor: iv.role?.startsWith('MCQ:') ? 'rgba(59, 130, 246, 0.3)' : 'var(--accent-border)' 
                         }}>
-                          {iv.role || 'Practice'}
+                          {iv.job_id && jobMap[iv.job_id.toString()] ? jobMap[iv.job_id.toString()] : (iv.role || 'Practice')}
                         </span>
                       </td>
                       <td style={{ textAlign: 'center' }}>
                         <span style={{ fontSize: '0.9rem', fontWeight: 800, color: scoreColor(scoreNum) }}>{overallScore}</span>
-                      </td>
-                      <td style={{ fontSize: '0.72rem', color: 'var(--text-3)', fontFamily: 'monospace', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '120px' }}>
-                        {iv.device_id ? iv.device_id.slice(0, 14) + '...' : '—'}
                       </td>
                       <td>
                         <div style={{ fontSize: '0.82rem', color: 'var(--text-2)', whiteSpace: 'nowrap' }}>{dateDisplay}</div>
@@ -168,7 +182,7 @@ export default async function InterviewsPage() {
                   );
                 }) : (
                   <tr>
-                    <td colSpan={6}>
+                    <td colSpan={5}>
                       <div className="empty-state">
                         <div className="empty-icon"><FileText size={40} /></div>
                         <div className="empty-title">No sessions recorded yet</div>

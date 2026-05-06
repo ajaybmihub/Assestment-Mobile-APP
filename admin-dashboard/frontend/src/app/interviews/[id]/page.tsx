@@ -3,7 +3,7 @@ import Link from 'next/link';
 import { Search, Video, VideoOff, ShieldCheck, MessageCircle, User, ArrowLeft, ChevronDown, Info } from 'lucide-react';
 
 async function getInterviewWithUser(id: string) {
-  const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+  const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:5000';
   try {
     const res = await fetch(`${API_URL}/interviews/${id}`, { cache: 'no-store' });
     if (!res.ok) return null;

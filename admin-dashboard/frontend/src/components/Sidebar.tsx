@@ -43,9 +43,7 @@ export default function Sidebar() {
 
         {/* Footer card — mirrors the reference image upgrade/info block */}
         <div className="sidebar-footer">
-          
-          
-          <div style={{ marginTop: '1.25rem', paddingTop: '1.25rem', borderTop: '1px solid rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
             <div className="avatar" style={{ width: '32px', height: '32px', background: 'rgba(255,255,255,0.1)', color: 'white', fontSize: '0.8rem', fontWeight: 700 }}>A</div>
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ fontSize: '0.75rem', fontWeight: 600, color: '#fff', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>Admin User</div>

@@ -18,6 +18,7 @@ export class Interview {
   @Prop() device_id: string;
   @Prop() device_name: string;
   @Prop() role: string;
+  @Prop() job_id?: number;
   @Prop() job_description?: string;
 
   @Prop({ type: Object })

@@ -12,6 +12,7 @@ export default function TicketDetailPage() {
   const [loading, setLoading] = useState(true);
   const [notes, setNotes] = useState('');
   const [isUpdating, setIsUpdating] = useState(false);
+  const [isResolving, setIsResolving] = useState(false);
 
   useEffect(() => {
     async function load() {
@@ -24,10 +25,15 @@ export default function TicketDetailPage() {
         }
         const data = await res.json();
         const uRes = await fetch(`${API_URL}/users/${data.user_id}`, { cache: 'no-store' });
-        const user = uRes.ok ? await uRes.json() : null;
+        let user = null;
+        if (uRes.ok && uRes.status !== 204) {
+          const text = await uRes.text();
+          user = text ? JSON.parse(text) : null;
+        }
         setTicket({ ...data, userName: user?.name || 'Registered User' });
+        if (data.resolution_notes) setNotes(data.resolution_notes);
       } catch (e) {
-        console.error(e);
+        console.error('Error loading ticket or user:', e);
       } finally {
         setLoading(false);
       }
@@ -38,7 +44,7 @@ export default function TicketDetailPage() {
   const updateStatus = async (status: string) => {
     const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
     if (!notes.trim() && status === 'resolved') {
-      alert('Please provide resolution notes before marking as resolved.');
+      setIsResolving(true);
       return;
     }
     
@@ -50,9 +56,10 @@ export default function TicketDetailPage() {
         body: JSON.stringify({ status, notes }),
       });
       if (res.ok) {
-        setNotes('');
+        setIsResolving(false);
         const updated = await res.json();
         setTicket({ ...ticket, ...updated });
+        if (updated.resolution_notes) setNotes(updated.resolution_notes);
         router.refresh();
       }
     } catch (e) {
@@ -142,63 +149,102 @@ export default function TicketDetailPage() {
             <div className="card-title" style={{ fontSize: '1rem', color: 'var(--accent)' }}>Action Center</div>
           </div>
           <div style={{ padding: '2.5rem' }}>
-             <div style={{ color: 'var(--text-3)', fontSize: '0.9rem', marginBottom: '1.25rem' }}>Enter resolution notes or progress updates below:</div>
-              <textarea 
-                 value={notes}
-                 onChange={(e) => setNotes(e.target.value)}
-                 placeholder="Ex: Resolved the sync issue by restarting the worker..."
-                 style={{ 
-                   width: '100%', 
-                   minHeight: '140px', 
-                   background: 'var(--bg-elevated)', 
-                   border: '2px solid var(--border)', 
-                   borderRadius: '16px', 
-                   padding: '1.25rem', 
-                   color: 'var(--text-1)',
-                   marginBottom: '2rem',
-                   resize: 'vertical',
-                   fontSize: '1rem',
-                   outline: 'none',
-                   transition: 'all 0.2s',
-                   fontFamily: 'inherit'
-                 }}
-                 onFocus={(e) => { e.target.style.borderColor = 'var(--accent)'; e.target.style.boxShadow = '0 0 0 4px rgba(124,58,237,0.1)'; }}
-                 onBlur={(e) => { e.target.style.borderColor = 'var(--border)'; e.target.style.boxShadow = 'none'; }}
-              />
-             <div style={{ display: 'flex', gap: '1.5rem' }}>
+              {/* 1. Change Ticket Status at TOP */}
+              <div style={{ marginBottom: '2rem', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                 <div style={{ fontSize: '0.7rem', fontWeight: 800, color: 'var(--text-4)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Change Ticket Status</div>
+                 <div style={{ display: 'flex', background: 'var(--bg-elevated)', padding: '6px', borderRadius: '14px', border: '1px solid var(--border)', gap: '6px' }}>
+                   <StatusButton 
+                     active={ticket.status === 'open'} 
+                     label="Open" 
+                     color="#EF4444" 
+                     onClick={() => updateStatus('open')} 
+                     disabled={isUpdating}
+                   />
+                   <StatusButton 
+                     active={ticket.status === 'in-progress'} 
+                     label="In Progress" 
+                     color="#F59E0B" 
+                     onClick={() => updateStatus('in-progress')} 
+                     disabled={isUpdating}
+                   />
+                   <StatusButton 
+                     active={ticket.status === 'resolved' || isResolving} 
+                     label="Resolved" 
+                     color="#10B981" 
+                     onClick={() => {
+                       if (ticket.status !== 'resolved') {
+                         setIsResolving(true);
+                         if (notes.trim()) updateStatus('resolved');
+                       }
+                     }} 
+                     disabled={isUpdating}
+                   />
+                 </div>
+              </div>
+
+              {/* 2. Message Section - show if already RESOLVED or if user clicked Resolved button */}
+              {(ticket.status === 'resolved' || isResolving) && (
+                <div style={{ marginBottom: '1.5rem', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                  <div style={{ fontSize: '0.7rem', fontWeight: 800, color: 'var(--text-4)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Resolution Notes / Progress Updates</div>
+                  <textarea 
+                    value={notes}
+                    onChange={(e) => setNotes(e.target.value)}
+                    placeholder="Ex: Resolved the sync issue by restarting the worker..."
+                    readOnly={ticket.status === 'resolved' && !isResolving}
+                    style={{ 
+                      width: '100%', 
+                      minHeight: '120px', 
+                      background: ticket.status === 'resolved' && !isResolving ? 'rgba(255,255,255,0.02)' : 'var(--bg-elevated)', 
+                      border: '2px solid var(--border)', 
+                      borderRadius: '16px', 
+                      padding: '1.25rem', 
+                      color: ticket.status === 'resolved' && !isResolving ? 'var(--text-4)' : 'var(--text-1)',
+                      resize: 'vertical',
+                      fontSize: '0.95rem',
+                      outline: 'none',
+                      transition: 'all 0.2s',
+                      fontFamily: 'inherit',
+                      fontStyle: ticket.status === 'resolved' && !isResolving ? 'italic' : 'normal'
+                    }}
+                    onFocus={(e) => { if (!e.target.readOnly) { e.target.style.borderColor = 'var(--accent)'; e.target.style.boxShadow = '0 0 0 4px rgba(124,58,237,0.1)'; } }}
+                    onBlur={(e) => { e.target.style.borderColor = 'var(--border)'; e.target.style.boxShadow = 'none'; }}
+                  />
+                  {(isResolving || (ticket.status === 'resolved' && isResolving)) ? (
+                    <button 
+                      onClick={() => updateStatus('resolved')}
+                      disabled={isUpdating}
+                      className="btn btn-primary"
+                      style={{ marginTop: '0.5rem', alignSelf: 'flex-end', padding: '0.5rem 1.5rem' }}
+                    >
+                      {ticket.status === 'resolved' ? 'Save Changes' : 'Confirm Resolution'}
+                    </button>
+                  ) : ticket.status === 'resolved' && (
+                    <button 
+                      onClick={() => setIsResolving(true)}
+                      className="btn btn-outline"
+                      style={{ marginTop: '0.5rem', alignSelf: 'flex-end', padding: '0.4rem 1rem', fontSize: '0.75rem', height: 'auto' }}
+                    >
+                      Update Notes
+                    </button>
+                  )}
+                </div>
+              )}
+
+              {/* 3. Quick Action at the bottom */}
+              <div style={{ marginBottom: '1.5rem' }}>
                  <button 
-                   onClick={() => updateStatus('in-progress')}
-                   disabled={isUpdating || ticket.status === 'resolved'}
-                   className="btn btn-ghost"
-                   style={{ flex: 1, height: '54px', fontSize: '0.9rem', fontWeight: 700, borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
-                 >
-                   {isUpdating ? <Loader2 className="animate-spin" size={18} /> : <Clock size={18} />}
-                   {isUpdating ? 'UPDATING...' : 'MARK IN-PROGRESS'}
-                 </button>
-                 <button 
-                   onClick={() => updateStatus('resolved')}
-                   disabled={isUpdating || ticket.status === 'resolved'}
-                   className="badge badge-live"
-                   style={{ 
-                     flex: 1, 
-                     height: '54px', 
-                     fontSize: '0.9rem', 
-                     fontWeight: 700, 
-                     cursor: ticket.status === 'resolved' ? 'default' : 'pointer', 
-                     border: 'none',
-                     borderRadius: '12px',
-                     opacity: ticket.status === 'resolved' ? 0.6 : 1,
-                     display: 'flex',
-                     alignItems: 'center',
-                     justifyContent: 'center',
-                     gap: '8px'
+                   onClick={() => {
+                     setNotes("Triaged: This behavior is intended and not a bug.");
+                     setIsResolving(true);
                    }}
+                   disabled={isUpdating || ticket.status === 'resolved'}
+                   className="btn btn-outline"
+                   style={{ width: '100%', height: '48px', fontSize: '0.85rem', fontWeight: 700, borderRadius: '12px', color: 'var(--text-3)', borderStyle: 'dashed' }}
                  >
-                   {ticket.status === 'resolved' ? <CheckCircle size={18} /> : null}
-                   {ticket.status === 'resolved' ? 'TICKET RESOLVED' : 'RESOLVE TICKET'}
+                   QUICK ACTION: MARK AS 'NOT A BUG'
                  </button>
-             </div>
-          </div>
+              </div>
+           </div>
         </div>
 
         <div style={{ textAlign: 'center', marginTop: '2rem' }}>
@@ -208,5 +254,33 @@ export default function TicketDetailPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+function StatusButton({ active, label, color, onClick, disabled }: { active: boolean, label: string, color: string, onClick: () => void, disabled: boolean }) {
+  return (
+    <button 
+      onClick={onClick}
+      disabled={disabled || active}
+      style={{ 
+        flex: 1,
+        height: '40px',
+        border: 'none',
+        borderRadius: '10px',
+        fontSize: '0.8rem',
+        fontWeight: 700,
+        cursor: (disabled || active) ? 'default' : 'pointer',
+        background: active ? color : 'transparent',
+        color: active ? '#fff' : 'var(--text-3)',
+        transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: '6px'
+      }}
+    >
+      {active && <CheckCircle size={14} />}
+      {label.toUpperCase()}
+    </button>
   );
 }

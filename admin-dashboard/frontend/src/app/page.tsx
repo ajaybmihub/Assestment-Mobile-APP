@@ -5,27 +5,39 @@ import Link from 'next/link';
 import { Users, PlayCircle, Activity, Mail, ClipboardList, User, ArrowRight, ShieldAlert, MessageCircle, Clock, RefreshCw, Ticket, AlertCircle } from 'lucide-react';
 
 async function fetchDashboardData() {
-  const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+  const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:5000';
+  console.log(`[DASHBOARD] Fetching data from: ${API_URL}`);
+  
   try {
     const [uRes, iRes, tRes] = await Promise.all([
-      fetch(`${API_URL}/users`, { cache: 'no-store' }),
-      fetch(`${API_URL}/interviews`, { cache: 'no-store' }),
-      fetch(`${API_URL}/tickets`, { cache: 'no-store' }),
+      fetch(`${API_URL}/users?limit=1000`, { cache: 'no-store' }).catch(e => { console.error('Users fetch failed', e); return null; }),
+      fetch(`${API_URL}/interviews`, { cache: 'no-store' }).catch(e => { console.error('Interviews fetch failed', e); return null; }),
+      fetch(`${API_URL}/tickets`, { cache: 'no-store' }).catch(e => { console.error('Tickets fetch failed', e); return null; }),
     ]);
-    const users = await uRes.json();
-    const interviews = await iRes.json();
-    const tickets = await tRes.json();
+
+    const users = uRes && uRes.ok ? await uRes.json() : { data: [] };
+    const interviews = iRes && iRes.ok ? await iRes.json() : { interviews: [] };
+    const tickets = tRes && tRes.ok ? await tRes.json() : { tickets: [] };
 
     const allUsers: any[] = users.data ?? [];
     const allInterviews: any[] = interviews.interviews ?? [];
     const allTickets: any[] = tickets.tickets ?? [];
 
     const userNameMap: Record<string, string> = {};
-    allUsers.forEach(u => { userNameMap[u._id] = u.name || 'Anonymous'; });
+    allUsers.forEach(u => { 
+      const name = u.name || 'Anonymous Candidate';
+      userNameMap[u._id] = name; 
+      userNameMap[u._id.replace(/^user_/, '')] = name;
+    });
 
     const sessionsByUser: Record<string, number> = {};
     for (const iv of allInterviews) {
-      sessionsByUser[iv.user_id] = (sessionsByUser[iv.user_id] ?? 0) + 1;
+      const uId = iv.user_id;
+      const cleanId = uId?.replace(/^user_/, '');
+      sessionsByUser[uId] = (sessionsByUser[uId] ?? 0) + 1;
+      if (cleanId && cleanId !== uId) {
+        sessionsByUser[cleanId] = (sessionsByUser[cleanId] ?? 0) + 1;
+      }
     }
 
     const activeCount = Object.keys(sessionsByUser).length;
@@ -169,48 +181,50 @@ export default function Dashboard() {
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
             {isRefreshing && <RefreshCw size={14} className="animate-spin" style={{ color: 'var(--text-4)' }} />}
-            <span className="badge badge-live">
-              <span className="badge-dot" />
-              Live Sync Active
-            </span>
           </div>
         </div>
       </div>
 
       {/* TOP STATS */}
       <div className="stats-grid" style={{ marginBottom: '1.5rem' }}>
-        <div className="stat-card">
-          <div className="stat-card-icon icon-purple"><Users size={20} /></div>
-          <div>
-            <div className="stat-label">Total Users</div>
-            <div className="stat-value">{totalUsers}</div>
-            <div className="stat-meta">{uniqueDevices} unique devices</div>
+        <Link href="/users" style={{ textDecoration: 'none' }}>
+          <div className="stat-card" style={{ cursor: 'pointer', transition: 'all 0.2s', minHeight: '124px' }}>
+            <div className="stat-card-icon icon-purple"><Users size={20} /></div>
+            <div>
+              <div className="stat-label">Total Users</div>
+              <div className="stat-value">{totalUsers}</div>
+            </div>
           </div>
-        </div>
-        <div className="stat-card">
-          <div className="stat-card-icon icon-blue"><PlayCircle size={20} /></div>
-          <div>
-            <div className="stat-label">Total Assessments</div>
-            <div className="stat-value">{totalSessions}</div>
-            <div className="stat-meta">{activeUsers} active candidates</div>
+        </Link>
+        <Link href="/interviews" style={{ textDecoration: 'none' }}>
+          <div className="stat-card" style={{ cursor: 'pointer', transition: 'all 0.2s', minHeight: '124px' }}>
+            <div className="stat-card-icon icon-blue"><PlayCircle size={20} /></div>
+            <div>
+              <div className="stat-label">Total Assessments</div>
+              <div className="stat-value">{totalSessions}</div>
+            </div>
           </div>
-        </div>
-        <div className="stat-card">
-          <div className="stat-card-icon icon-green"><Activity size={20} /></div>
-          <div>
-            <div className="stat-label">Active Users</div>
-            <div className="stat-value">{activeUsers}</div>
-            <div className="stat-meta"><span style={{ color: 'var(--green)' }}>{engagementRate}%</span> engagement rate</div>
+        </Link>
+        <Link href="/users?filter=active" style={{ textDecoration: 'none' }}>
+          <div className="stat-card" style={{ cursor: 'pointer', transition: 'all 0.2s', minHeight: '124px' }}>
+            <div className="stat-card-icon icon-green"><Activity size={20} /></div>
+            <div>
+              <div className="stat-label">Active Users</div>
+              <div className="stat-value">{activeUsers}</div>
+              <div className="stat-meta"><span style={{ color: 'var(--green)' }}>{engagementRate}%</span> engagement rate</div>
+            </div>
           </div>
-        </div>
-        <div className="stat-card">
-          <div className="stat-card-icon icon-amber"><Mail size={20} /></div>
-          <div>
-            <div className="stat-label">Support Tickets</div>
-            <div className="stat-value">{totalTickets}</div>
-            <div className="stat-meta"><span style={{ color: openTickets > 0 ? '#EF4444' : 'var(--green)' }}>{openTickets} open</span> issues pending</div>
+        </Link>
+        <Link href="/tickets" style={{ textDecoration: 'none' }}>
+          <div className="stat-card" style={{ cursor: 'pointer', transition: 'all 0.2s', minHeight: '124px' }}>
+            <div className="stat-card-icon icon-amber"><Mail size={20} /></div>
+            <div>
+              <div className="stat-label">Support Tickets</div>
+              <div className="stat-value">{totalTickets}</div>
+              <div className="stat-meta"><span style={{ color: openTickets > 0 ? '#EF4444' : 'var(--green)' }}>{openTickets} open</span> issues pending</div>
+            </div>
           </div>
-        </div>
+        </Link>
       </div>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
@@ -235,7 +249,12 @@ export default function Dashboard() {
             </div>
             <div>
               {recentActivity.length > 0 ? recentActivity.map((iv: any, i: number) => {
-                const name = userNameMap[iv.user_id] || 'Anonymous';
+                const uId = iv.user_id;
+                let name = userNameMap[uId] || userNameMap[uId?.replace(/^user_/, '')] || userNameMap[`user_${uId}`] || 'Anonymous';
+                
+                if (name === 'Anonymous Candidate' || name === 'Anonymous' || name === 'Registered User') {
+                  name = uId?.replace(/^user_/, '') || 'Guest';
+                }
                 const score = parseInt(iv.scores?.overall) || 0;
                 const scoreStr = iv.scores?.overall || '—';
                 const col = scoreColor(score);
@@ -392,7 +411,10 @@ export default function Dashboard() {
                   {Object.entries(sessionsByUser)
                     .sort((a, b) => (b[1] as number) - (a[1] as number))
                     .map(([userId, sessions], idx) => {
-                      const name = userNameMap[userId] || 'Anonymous';
+                      let name = userNameMap[userId] || 'Anonymous';
+                      if (name === 'Anonymous Candidate' || name === 'Anonymous' || name === 'Registered User') {
+                        name = userId?.replace(/^user_/, '') || 'Guest';
+                      }
                       const meta = userMetaMap[userId] || { device: 'Unknown', lastActive: '', isOnline: false };
                       const isRepeat = (sessions as number) > 1;
                       

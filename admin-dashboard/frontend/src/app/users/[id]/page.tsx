@@ -14,7 +14,14 @@ async function getUser(id: string) {
     
     // Use the actual ID from the user object (if found) or decode the URL param
     const actualUserId = user?._id || decodeURIComponent(id);
-    const userSessions = allInterviews.filter((iv: any) => iv.user_id === actualUserId);
+    const cleanActualId = actualUserId?.replace(/^user_/, '');
+    
+    // Match sessions using both prefixed and non-prefixed versions of the ID
+    const userSessions = allInterviews.filter((iv: any) => {
+      const ivId = iv.user_id;
+      const cleanIvId = ivId?.replace(/^user_/, '');
+      return ivId === actualUserId || cleanIvId === cleanActualId || `user_${cleanIvId}` === actualUserId;
+    });
     
     return { user, userSessions };
   } catch {
@@ -113,51 +120,53 @@ export default async function UserDetailPage({ params }: { params: Promise<{ id:
             </div>
           </div>
           {userSessions.length > 0 ? (
-            <table className="data-table">
-              <thead>
-                <tr>
-                  <th style={{ paddingLeft: '1.5rem' }}>Track / Role</th>
-                  <th>Date & Time</th>
-                  <th>Score</th>
-                  <th style={{ paddingRight: '1.5rem', textAlign: 'right' }}>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {sortedSessions.map((iv: any, i: number) => {
-                  const ts = iv.start_time || iv.created_at;
-                  const date = ts
-                    ? new Date(ts).toLocaleString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })
-                    : '—';
-                  const overallScore = iv.scores?.overall || '0%';
-                  return (
-                    <tr key={iv._id} style={{ height: '64px' }}>
-                      <td style={{ paddingLeft: '1.5rem' }}>
-                        <span style={{ 
-                          fontSize: '0.75rem', padding: '0.35rem 0.8rem', borderRadius: '100px', fontWeight: 600, border: '1px solid',
-                          background: iv.role?.startsWith('MCQ:') ? 'rgba(59, 130, 246, 0.15)' : 'var(--accent-subtle)', 
-                          color: iv.role?.startsWith('MCQ:') ? '#60A5FA' : 'var(--accent-light)', 
-                          borderColor: iv.role?.startsWith('MCQ:') ? 'rgba(59, 130, 246, 0.3)' : 'transparent' 
-                        }}>
-                          {iv.role ?? 'General'}
-                        </span>
-                      </td>
-                      <td style={{ fontSize: '0.82rem', color: 'var(--text-2)', whiteSpace: 'nowrap', fontWeight: 500 }}>{date}</td>
-                      <td>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                          <span style={{ fontWeight: 700, color: 'var(--text-1)', fontSize: '0.875rem' }}>{overallScore}</span>
-                        </div>
-                      </td>
-                      <td style={{ paddingRight: '1.5rem', textAlign: 'right' }}>
-                        <Link href={`/interviews/${iv._id}`}
-                          style={{ fontSize: '0.75rem', padding: '0.45rem 1rem', borderRadius: '10px', background: 'rgba(255,255,255,0.04)', border: '1px solid var(--border-strong)', color: 'var(--text-2)', textDecoration: 'none', fontWeight: 600, display: 'inline-block' }}>
-                          Report →
-                        </Link>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+            <div className="table-scroll-container" style={{ maxHeight: '400px' }}>
+              <table className="data-table" style={{ borderCollapse: 'separate', borderSpacing: 0 }}>
+                <thead>
+                  <tr>
+                    <th style={{ paddingLeft: '1.5rem' }}>Track / Role</th>
+                    <th>Date & Time</th>
+                    <th>Score</th>
+                    <th style={{ paddingRight: '1.5rem', textAlign: 'right' }}>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {sortedSessions.map((iv: any, i: number) => {
+                    const ts = iv.start_time || iv.created_at;
+                    const date = ts
+                      ? new Date(ts).toLocaleString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })
+                      : '—';
+                    const overallScore = iv.scores?.overall || '0%';
+                    return (
+                      <tr key={iv._id} style={{ height: '64px' }}>
+                        <td style={{ paddingLeft: '1.5rem' }}>
+                          <span style={{ 
+                            fontSize: '0.75rem', padding: '0.35rem 0.8rem', borderRadius: '100px', fontWeight: 600, border: '1px solid',
+                            background: iv.role?.startsWith('MCQ:') ? 'rgba(59, 130, 246, 0.15)' : 'var(--accent-subtle)', 
+                            color: iv.role?.startsWith('MCQ:') ? '#60A5FA' : 'var(--accent-light)', 
+                            borderColor: iv.role?.startsWith('MCQ:') ? 'rgba(59, 130, 246, 0.3)' : 'transparent' 
+                          }}>
+                            {iv.role ?? 'General'}
+                          </span>
+                        </td>
+                        <td style={{ fontSize: '0.82rem', color: 'var(--text-2)', whiteSpace: 'nowrap', fontWeight: 500 }}>{date}</td>
+                        <td>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                            <span style={{ fontWeight: 700, color: 'var(--text-1)', fontSize: '0.875rem' }}>{overallScore}</span>
+                          </div>
+                        </td>
+                        <td style={{ paddingRight: '1.5rem', textAlign: 'right' }}>
+                          <Link href={`/interviews/${iv._id}`}
+                            style={{ fontSize: '0.75rem', padding: '0.45rem 1rem', borderRadius: '10px', background: 'rgba(255,255,255,0.04)', border: '1px solid var(--border-strong)', color: 'var(--text-2)', textDecoration: 'none', fontWeight: 600, display: 'inline-block' }}>
+                            Report →
+                          </Link>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
           ) : (
             <div style={{ padding: '5rem', textAlign: 'center', color: 'var(--text-4)' }}>No assessment data found for this profile.</div>
           )}

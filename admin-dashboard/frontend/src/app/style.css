@@ -485,7 +485,21 @@ a { text-decoration: none; color: inherit; }
   border-bottom: 2px solid var(--border);
   background: var(--bg-elevated);
   white-space: nowrap;
+  position: sticky;
+  top: 0;
+  z-index: 10;
 }
+
+.table-scroll-container {
+  max-height: 600px;
+  overflow: auto;
+  position: relative;
+  scrollbar-width: thin;
+  scrollbar-color: var(--accent-border) transparent;
+}
+.table-scroll-container::-webkit-scrollbar { width: 6px; height: 6px; }
+.table-scroll-container::-webkit-scrollbar-track { background: transparent; }
+.table-scroll-container::-webkit-scrollbar-thumb { background: var(--accent-border); border-radius: 10px; }
 .data-table td {
   padding: 1rem 1.5rem;
   font-size: 0.875rem;
